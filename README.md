@@ -8,15 +8,8 @@
 
 ## Description
 
-TODO: Description
-
-## Features
-
-## Examples
-
-    require 'drain'
-
-## Requirements
+Drain is a small set of libraries that I use in my other gems.
+The Api is far from stable yet, so use at your own risk!
 
 ## Install
 
@@ -27,3 +20,6 @@ TODO: Description
 Copyright (c) 2015 Damien Robert
 
 MIT License. See {file:LICENSE.txt} for details.
+
+Some of the code is inspired by other project, in general I give proper
+Acknowledgement in the corresponding file.

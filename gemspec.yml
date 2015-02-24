@@ -1,6 +1,7 @@
 name: drain
-summary: "TODO: Summary"
-description: "TODO: Description"
+summary: "Use a drain for a dryer ruby!"
+description: |
+  Drain is a small set of libraries that I use in my other gems.
 license: MIT
 authors: Damien Robert
 email: Damien.Olivier.Robert+gems@gmail.com

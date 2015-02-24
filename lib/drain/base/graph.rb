@@ -1,4 +1,5 @@
 require 'set'
+#Originally inspired by depgraph: https://github.com/dcadenas/depgraph
 
 module DR
 	class Node
