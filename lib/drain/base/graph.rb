@@ -14,8 +14,8 @@ module DR
 			@graph=graph
 			graph.nodes << self if @graph
 		end
-		def each
-			@children.each
+		def each(&b)
+			@children.each(&b)
 		end
 		def <=>(other)
 			return @name <=> other.name
@@ -87,27 +87,45 @@ module DR
 			@nodes=[]
 			build(g)
 		end
-		def build(node, children: [], parents: [], **keywords)
+		def each(&b)
+			@nodes.each(&b)
+		end
+
+		def build_node(node,**attributes)
+			case node
+			when Node
+				if node.graph == self
+					node.attributes.merge(keywords)
+					node
+				else
+					Node.new(node.name, graph: self, attributes: node.attributes.merge(attributes))
+				end
+			else
+				@nodes.find {|n| n.name == node} || Node.new(node, graph: self, attributes: attributes)
+			end
+		end
+
+		def build(node, children: [], parents: [], **attributes)
 			graph_node=
 				case node
 				when Node
 					if node.graph == self
-						node.attributes.merge(keywords)
-						node
+						build_node(node,**attributes)
+						#adding the children for this node would be useless
 					else
-						n=Node.new(node.name, graph: self, attributes: node.attributes.merge(keywords))
-						n.add_child(* node.children.map {|c| build(c,**keywords)})
-						n.add_parent(* node.parents.map {|c| build(c,**keywords)})
+						n=build_node(node,**attributes)
+						#TODO this is not recursive
+						n.add_child(* node.children.map {|c| build(c,**attributes)})
+						n.add_parent(* node.parents.map {|c| build(c,**attributes)})
 						n
 					end
 				when Hash
 					node.each do |name,children|
-						n=build(name,**keywords)
-						[*children].each {|c| n.add_child(build(c,**keywords))}
+						n=build_node(name,**attributes)
+						[*children].each {|c| n.add_child(build_node(c,**attributes))}
 					end
 				else
-					match = @nodes.find {|n| n.name == node}
-					match || Node.new(node, graph: self, attributes: keywords)
+					build_node(node,**attributes)
 				end
 			graph_node.add_child(*children.map { |child| build(child) })
 			graph_node.add_parent(*parents.map { |child| build(child) })
