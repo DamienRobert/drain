@@ -6,11 +6,11 @@ module DR
 		include Enumerable
 		attr_reader :graph
 		attr_accessor :name, :attributes, :parents, :children
-		def initialize(name, attributes: nil, graph: nil)
+		def initialize(name, attributes: {}, graph: nil)
 			@name = name
 			@children = []
 			@parents = []
-			@attributes = attributes
+			@attributes = {}
 			@graph=graph
 			graph.nodes << self if @graph
 		end
@@ -21,6 +21,7 @@ module DR
 			return @name <=> other.name
 		end
 		#self.add_child(ploum) marks ploum as a child of self (ie ploum depends on self)
+		#we don't check if the nodes given are in the same graph
 		def add_child(*nodes)
 			nodes.each do |node|
 				if not @children.include?(node)
@@ -84,26 +85,30 @@ module DR
 		include Enumerable
 		def initialize(g=nil)
 			@nodes=[]
-			if g #convert a hash to a graph
-				g.each do |name,children|
-					n=build(name)
-					n.add_child(*children)
-				end
-			end
+			build(g)
 		end
 		def build(node, children: [], parents: [], **keywords)
 			graph_node=
-			case node
-			when Node
-				match = @nodes.find {|n| n == node} and return match
-				Node.new(node.name, graph: self, **keywords.merge({attributes: node.attributes||keywords[:attributes]}))
-				node.children.each do |c|
-					build(c,**keywords)
+				case node
+				when Node
+					if node.graph == self
+						node.attributes.merge(keywords)
+						node
+					else
+						n=Node.new(node.name, graph: self, attributes: node.attributes.merge(keywords))
+						n.add_child(* node.children.map {|c| build(c,**keywords)})
+						n.add_parent(* node.parents.map {|c| build(c,**keywords)})
+						n
+					end
+				when Hash
+					node.each do |name,children|
+						n=build(name,**keywords)
+						[*children].each {|c| n.add_child(build(c,**keywords))}
+					end
+				else
+					match = @nodes.find {|n| n.name == node}
+					match || Node.new(node, graph: self, attributes: keywords)
 				end
-			else
-				match = @nodes.find {|n| n.name == node}
-				match || Node.new(node, graph: self, **keywords)
-			end
 			graph_node.add_child(*children.map { |child| build(child) })
 			graph_node.add_parent(*parents.map { |child| build(child) })
 			return graph_node
@@ -142,16 +147,18 @@ module DR
 		#return the connected set containing nodes (following the direction
 		#given)
 		def connected(*nodes, down:true, up:true)
-			r=Set.new()
-			nodes.each do |node|
-				unless r.include?(node)
+			found=Set.new(nodes)
+			while !nodes.empty?
+				node=nodes.shift
+				unless found.include?(node)
 					new_nodes=Set.new()
 					new_nodes.merge(node.children) if down
 					new_nodes.merge(node.parents) if up
-					r.merge(connected(*new_nodes, down:down,up:up))
+					new_nodes-=found
+					nodes.concat(new_nodes.to_a)
 				end
 			end
-			return r
+			return found
 		end
 		#return all parents
 		def ancestors(*nodes)
@@ -164,10 +171,9 @@ module DR
 
 		#from a list of nodes, return all nodes that are not descendants of
 		#other nodes in the graph
-		def unneeded(*nodes)
-			tokeep.merge(@nodes-nodes)
+		def unneeded(*nodes, needed: @nodes-nodes)
 			nodes.each do |node|
-				unneeded << node unless ancestors(node).any? {|c| tokeep.include?(c)}
+				unneeded << node unless ancestors(node).any? {|c| needed.include?(c)}
 			end
 		end
 		#return all dependencies that are not needed by any more nodes.
