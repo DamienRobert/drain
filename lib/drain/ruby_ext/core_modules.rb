@@ -67,8 +67,10 @@ module DR
 			end
 
 			#from a hash {key: [values]} produce a hash {value: [keys]}
-			#there is already Hash#key which does that, but the difference here is
-			#that we flatten Enumerable values
+			#there is already Hash#invert using Hash#key which does that, but the difference here is that we flatten Enumerable values
+			#h={ploum: 2, plim: 2, plam: 3}
+			#h.invert #=> {2=>:plim, 3=>:plam}
+			#h.inverse #=> {2=>[:ploum, :plim], 3=>[:plam]}
 			def inverse
 				r={}
 				each_key do |k|
