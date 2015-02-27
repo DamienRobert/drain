@@ -233,7 +233,7 @@ module DR
 		#So to implement the equivalent of pacman -Rc packages
 		#it suffices to add the ancestors of packages
 		#For pacman -Rs, this is exactly unneeded_descendants
-		#and pacman -Rcs would be ancestors(unneeded_descendants)
+		#and pacman -Rcs would be unneeded_descendants(ancestors)
 		#finally to clean all unneeded packages (provided we have a list of
 		#packages 'tokeep' to keep), either use unneeded(@nodes-tokeep)
 		#or unneeded_descendants(roots, needed:tokeep)
