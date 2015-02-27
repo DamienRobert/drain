@@ -83,15 +83,19 @@ module DR
 	class Graph
 		attr_accessor :nodes
 		include Enumerable
-		def initialize(g=nil)
+		def initialize(*nodes, attributes: {})
 			@nodes=[]
-			build(g)
+			build(*nodes, attributes: {})
 		end
 		def each(&b)
 			@nodes.each(&b)
 		end
+		def to_a
+			return @nodes
+		end
 
-		def build_node(node,**attributes)
+		#construct a node (without edges)
+		def new_node(node,**attributes)
 			case node
 			when Node
 				if node.graph == self
@@ -105,44 +109,48 @@ module DR
 			end
 		end
 
-		def build(node, children: [], parents: [], **attributes)
+		#add a node (and its edges, recursively)
+		def add_node(node, children: [], parents: [], attributes: {})
 			graph_node=
 				case node
 				when Node
 					if node.graph == self
-						build_node(node,**attributes)
+						new_node(node,**attributes)
 						#adding the children for this node would be useless
 					else
-						n=build_node(node,**attributes)
-						#TODO this is not recursive
-						n.add_child(* node.children.map {|c| build(c,**attributes)})
-						n.add_parent(* node.parents.map {|c| build(c,**attributes)})
+						n=add_node(node,**attributes)
+						n.add_child(* node.children.map {|c| add_node(c,**attributes)})
+						n.add_parent(* node.parents.map {|c| add_node(c,**attributes)})
 						n
 					end
+				else
+					new_node(node,**attributes)
+				end
+			graph_node.add_child(*children.map { |child| add_node(child) })
+			graph_node.add_parent(*parents.map { |parent| add_node(parent) })
+		end
+
+		#build from a list of nodes or hash
+		def build(*nodes, attributes: {})
+			nodes.each do |node|
+				case node
 				when Hash
 					node.each do |name,children|
-						n=build_node(name,**attributes)
-						[*children].each {|c| n.add_child(build_node(c,**attributes))}
+						add_node(name,children: [*children], attributes: attributes)
 					end
 				else
-					build_node(node,**attributes)
+					add_node(node,**attributes)
 				end
-			graph_node.add_child(*children.map { |child| build(child) })
-			graph_node.add_parent(*parents.map { |child| build(child) })
-			return graph_node
+			end
 		end
-		def each
-			@nodes.each
-		end
-		def to_a
-			return @nodes
-		end
+
 		def all
 			@nodes.sort
 		end
 		def roots
 			@nodes.select{ |n| n.parents.length == 0}.sort
 		end
+
 		def dump(mode: :graph, nodes_list: :roots, **unused)
 			n=case nodes_list
 				when :roots; roots

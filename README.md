@@ -11,6 +11,10 @@
 Drain is a small set of libraries that I use in my other gems.
 The Api is far from stable yet, so use at your own risk!
 
+## Warning
+
+  For now the API is experimental and some parts are not ready to use!
+
 ## Install
 
     $ gem install drain

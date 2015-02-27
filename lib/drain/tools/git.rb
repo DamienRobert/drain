@@ -116,7 +116,6 @@ module DR
 		#return a list of submodules
 		def submodules
 			%x/git submodule status/.each_line.map { |l| l.split[1] }
-			end
 		end
 	end
 end
