@@ -57,7 +57,7 @@ module DR
 
 		STEP = 4
 		def to_s
-			return @name
+			@name
 		end
 		def to_graph(indent_level: 0)
 			sout = ""
@@ -93,6 +93,16 @@ module DR
 		def to_a
 			return @nodes
 		end
+		def [](node)
+			if node.is_a?(Node) and node.graph == self
+				return node
+			elsif node.is_a?(Node)
+				name=node.name
+			else
+				name=node
+			end
+			@nodes.find {|n| n.name == name}
+		end
 
 		#construct a node (without edges)
 		def new_node(node,**attributes)
@@ -111,23 +121,14 @@ module DR
 
 		#add a node (and its edges, recursively)
 		def add_node(node, children: [], parents: [], attributes: {})
-			graph_node=
-				case node
-				when Node
-					if node.graph == self
-						new_node(node,**attributes)
-						#adding the children for this node would be useless
-					else
-						n=add_node(node,**attributes)
-						n.add_child(* node.children.map {|c| add_node(c,**attributes)})
-						n.add_parent(* node.parents.map {|c| add_node(c,**attributes)})
-						n
-					end
-				else
-					new_node(node,**attributes)
-				end
+			graph_node=new_node(node,**attributes)
+			if node.is_a?(Node) and node.graph != self
+				graph_node.add_child(* node.children.map {|c| add_node(c,**attributes)})
+				graph_node.add_parent(* node.parents.map {|c| add_node(c,**attributes)})
+			end
 			graph_node.add_child(*children.map { |child| add_node(child) })
 			graph_node.add_parent(*parents.map { |parent| add_node(parent) })
+			graph_node
 		end
 
 		#build from a list of nodes or hash
@@ -142,6 +143,7 @@ module DR
 					add_node(node,**attributes)
 				end
 			end
+			self
 		end
 
 		def all
@@ -170,42 +172,59 @@ module DR
 			return sout
 		end
 
+		def to_nodes(*nodes)
+			nodes.map {|n| self[n]}
+		end
+
 		#return the connected set containing nodes (following the direction
 		#given)
 		def connected(*nodes, down:true, up:true)
-			found=Set.new(nodes)
+			nodes=to_nodes(*nodes)
+			found=Set.new()
 			while !nodes.empty?
 				node=nodes.shift
 				unless found.include?(node)
-					new_nodes=Set.new()
+					new_nodes=Set[node]
 					new_nodes.merge(node.children) if down
 					new_nodes.merge(node.parents) if up
 					new_nodes-=found
 					nodes.concat(new_nodes.to_a)
+					found.merge(new_nodes)
 				end
 			end
 			return found
 		end
 		#return all parents
 		def ancestors(*nodes)
+			nodes=to_nodes(*nodes)
 			connected(*nodes, up:true, down:false)
 		end
 		#return all childern
 		def descendants(*nodes)
+			nodes=to_nodes(*nodes)
 			connected(*nodes, up:false, down:true)
 		end
 
 		#from a list of nodes, return all nodes that are not descendants of
 		#other nodes in the graph
-		def unneeded(*nodes, needed: @nodes-nodes)
+		def unneeded(*nodes, needed: nil)
+			nodes=to_nodes(*nodes)
+			if needed
+				needed=to_nodes(needed)
+			else
+				needed=@nodes-nodes
+			end
+			unneeded=[]
 			nodes.each do |node|
 				unneeded << node unless ancestors(node).any? {|c| needed.include?(c)}
 			end
+			unneeded
 		end
 		#return all dependencies that are not needed by any more nodes.
 		#If some dependencies should be kept (think manual install), add them
 		#to the unneeded parameter
 		def unneeded_descendants(*nodes, needed:[])
+			nodes=to_nodes(*nodes)
 			needed-=nodes #nodes to delete are in priority
 			deps=descendants(*nodes)
 			deps-=needed #but for children nodes, needed nodes are in priority
@@ -223,6 +242,7 @@ module DR
 		#and the complementary graph. The union of both may not be the full
 		#graph [edges] in case the components are not connected
 		def subgraph(*nodes)
+			nodes=to_nodes(*nodes)
 			subgraph=Graph.new()
 			compgraph=Graph.new()
 			@nodes.each do |node|
