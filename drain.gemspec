@@ -10,7 +10,7 @@ Gem::Specification.new do |gem|
                   lib_dir = File.join(File.dirname(__FILE__),'lib')
                   $LOAD_PATH << lib_dir unless $LOAD_PATH.include?(lib_dir)
 
-                  require 'drain/version'
+                  require 'dr/version'
                   Drain::VERSION
                 end
 

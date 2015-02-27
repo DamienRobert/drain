@@ -1,5 +1,5 @@
 require 'helper'
-require 'drain/base/graph'
+require 'dr/base/graph'
 
 describe DR::Graph do
 	before do
