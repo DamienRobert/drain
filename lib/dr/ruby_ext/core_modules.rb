@@ -185,6 +185,14 @@ module DR
 		end
 	end
 
+	module CoreRef
+		CoreExt.constants.select {|c| c.is_a?(Class)}.each do |c|
+			refine const_get("::#{c}") do
+				include Module.const_get("CoreExt::#{c}")
+			end
+		end
+	end
+
 	module Recursive
 		extend self
 		def recursive_constructor(klass)
@@ -198,4 +206,3 @@ module DR
 	RecursiveHash=Recursive.recursive_constructor(Hash)
 	#Arrays don't accept blocks in the same way as Hashs, we need to pass a length parameter, so we can't use DR::RecursiveHash(Array)
 end
-
