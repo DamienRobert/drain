@@ -20,10 +20,17 @@ module DR
 		def <=>(other)
 			return @name <=> other.name
 		end
+
+		NodeError=Class.new(RuntimeError)
+		def check_node(node)
+			raise NodeError.new("wrong class: #{node.class}") unless node.is_a?(Node)
+			raise NodeError.new("wrong graph: #{node.graph}") if self.graph != node.graph
+		end
+
 		#self.add_child(ploum) marks ploum as a child of self (ie ploum depends on self)
-		#we don't check if the nodes given are in the same graph
 		def add_child(*nodes)
 			nodes.each do |node|
+				check_node(node)
 				if not @children.include?(node)
 					@children << node
 					node.parents << self
@@ -32,6 +39,7 @@ module DR
 		end
 		def rm_child(*nodes)
 			nodes.each do |node|
+				check_node(node)
 				if @children.include?(node)
 					@children.delete(node)
 					node.parents.delete(self)
@@ -40,6 +48,7 @@ module DR
 		end
 		def add_parent(*nodes)
 			nodes.each do |node|
+				check_node(node)
 				if not @parents.include?(node)
 					@parents << node
 					node.children << self
@@ -48,6 +57,7 @@ module DR
 		end
 		def rm_parent(*nodes)
 			nodes.each do |node|
+				check_node(node)
 				if @parents.include?(node)
 					@parents.delete(node)
 					node.children.delete(self)
