@@ -69,6 +69,9 @@ module DR
 		def to_s
 			@name
 		end
+		def inspect
+			"#{self.class}: #{@name}"+(graph.nil? ? "" : " (#{graph})")
+		end
 		def to_graph(indent_level: 0)
 			sout = ""
 			margin = ''
@@ -112,6 +115,10 @@ module DR
 				name=node
 			end
 			@nodes.find {|n| n.name == name}
+		end
+
+		def inspect
+			"#{self.class}: #{map {|x| x.to_s}}"
 		end
 
 		#construct a node (without edges)
@@ -190,17 +197,15 @@ module DR
 		#given)
 		def connected(*nodes, down:true, up:true)
 			nodes=to_nodes(*nodes)
-			found=Set.new()
+			found=[]
 			while !nodes.empty?
 				node=nodes.shift
-				unless found.include?(node)
-					new_nodes=Set[node]
-					new_nodes.merge(node.children) if down
-					new_nodes.merge(node.parents) if up
-					new_nodes-=found
-					nodes.concat(new_nodes.to_a)
-					found.merge(new_nodes)
-				end
+				found<<node
+				new_nodes=Set[node]
+				new_nodes.merge(node.children) if down
+				new_nodes.merge(node.parents) if up
+				new_nodes-=(found+nodes)
+				nodes.concat(new_nodes.to_a)
 			end
 			return found
 		end
@@ -217,6 +222,7 @@ module DR
 
 		#from a list of nodes, return all nodes that are not descendants of
 		#other nodes in the graph
+		#needed: the nodes whose descendants we keep
 		def unneeded(*nodes, needed: nil)
 			nodes=to_nodes(*nodes)
 			if needed
@@ -230,7 +236,8 @@ module DR
 			end
 			unneeded
 		end
-		#return all dependencies that are not needed by any more nodes.
+		#return all dependencies that are not needed by any more nodes, except
+		#the ones we are removing
 		#If some dependencies should be kept (think manual install), add them
 		#to the unneeded parameter
 		def unneeded_descendants(*nodes, needed:[])
