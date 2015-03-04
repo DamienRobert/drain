@@ -232,7 +232,7 @@ module DR
 			end
 			unneeded=[]
 			nodes.each do |node|
-				unneeded << node unless ancestors(node).any? {|c| needed.include?(c)}
+				unneeded << node if (ancestors(node) & needed).empty?
 			end
 			unneeded
 		end
@@ -242,6 +242,7 @@ module DR
 		#to the unneeded parameter
 		def unneeded_descendants(*nodes, needed:[])
 			nodes=to_nodes(*nodes)
+			needed=to_nodes(*needed)
 			needed-=nodes #nodes to delete are in priority
 			deps=descendants(*nodes)
 			deps-=needed #but for children nodes, needed nodes are in priority
