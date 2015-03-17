@@ -7,10 +7,10 @@ module DR
 		attr_reader :graph
 		attr_accessor :name, :attributes, :parents, :children
 		def initialize(name, attributes: {}, graph: nil)
-			@name = name
+			@name = name.to_s
 			@children = []
 			@parents = []
-			@attributes = {}
+			@attributes = attributes
 			@graph=graph
 			graph.nodes << self if @graph
 		end
@@ -66,18 +66,18 @@ module DR
 		end
 
 		STEP = 4
-		def to_s
-			@name
+		def to_s(show_attr: false)
+			@name + (show_attr && ! attributes.empty? ? " [#{attributes}]" : "")
 		end
 		def inspect
-			"#{self.class}: #{@name}"+(graph.nil? ? "" : " (#{graph})")
+			"#{self.class}: #{to_s(show_attr: true)}"+(graph.nil? ? "" : " (#{graph})")
 		end
-		def to_graph(indent_level: 0)
+		def to_graph(indent_level: 0, show_attr: true)
 			sout = ""
 			margin = ''
 			0.upto(indent_level/STEP-1) { |p| margin += (p==0 ? ' ' : '|') + ' '*(STEP - 1) }
 			margin += '|' + '-'*(STEP - 2)
-			sout += margin + "#{@name}\n"
+			sout += margin + "#{to_s(show_attr: show_attr)}\n"
 			@children.each do |child|
 				sout += child.to_graph(indent_level: indent_level+STEP)
 			end
@@ -123,17 +123,14 @@ module DR
 
 		#construct a node (without edges)
 		def new_node(node,**attributes)
-			case node
+			n=case node
 			when Node
-				if node.graph == self
-					node.attributes.merge(keywords)
-					node
-				else
-					Node.new(node.name, graph: self, attributes: node.attributes.merge(attributes))
-				end
+				node.graph == self ? node : Node.new(node.name, graph: self, attributes: node.attributes)
 			else
-				@nodes.find {|n| n.name == node} || Node.new(node, graph: self, attributes: attributes)
+				@nodes.find {|n| n.name == node} || Node.new(node, graph: self)
 			end
+			n.attributes.merge(attributes)
+			n
 		end
 
 		#add a node (and its edges, recursively)
@@ -170,7 +167,7 @@ module DR
 			@nodes.select{ |n| n.parents.length == 0}.sort
 		end
 
-		def dump(mode: :graph, nodes_list: :roots, **unused)
+		def dump(mode: :graph, nodes_list: :roots, show_attr: true, **unused)
 			n=case nodes_list
 				when :roots; roots
 				when :all; all
@@ -179,7 +176,7 @@ module DR
 			end
 			sout = ""
 			case mode
-			when :graph; n.each do |node| sout+=node.to_graph end
+			when :graph; n.each do |node| sout+=node.to_graph(show_attr: show_attr) end
 			when :list; n.each do |i| sout+="- #{i}\n" end
 			when :dot;
 				sout+="digraph gems {\n"
