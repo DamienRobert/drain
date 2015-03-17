@@ -27,6 +27,10 @@ module DR
 			raise NodeError.new("wrong graph: #{node.graph}") if self.graph != node.graph
 		end
 
+		def update_attributes(new_attr)
+			@attributes.merge!(new_attr)
+		end
+
 		#self.add_child(ploum) marks ploum as a child of self (ie ploum depends on self)
 		def add_child(*nodes)
 			nodes.each do |node|
@@ -67,7 +71,7 @@ module DR
 
 		STEP = 4
 		def to_s(show_attr: false)
-			@name + (show_attr && ! attributes.empty? ? " [#{attributes}]" : "")
+			@name + (show_attr && ! attributes.empty? ? " #{attributes}" : "")
 		end
 		def inspect
 			"#{self.class}: #{to_s(show_attr: true)}"+(graph.nil? ? "" : " (#{graph})")
@@ -79,7 +83,7 @@ module DR
 			margin += '|' + '-'*(STEP - 2)
 			sout += margin + "#{to_s(show_attr: show_attr)}\n"
 			@children.each do |child|
-				sout += child.to_graph(indent_level: indent_level+STEP)
+				sout += child.to_graph(indent_level: indent_level+STEP, show_attr: show_attr)
 			end
 			return sout
 		end
@@ -129,7 +133,7 @@ module DR
 			else
 				@nodes.find {|n| n.name == node} || Node.new(node, graph: self)
 			end
-			n.attributes.merge(attributes)
+			n.update_attributes(attributes)
 			n
 		end
 
