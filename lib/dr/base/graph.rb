@@ -100,9 +100,9 @@ module DR
 	class Graph
 		attr_accessor :nodes
 		include Enumerable
-		def initialize(*nodes, attributes: {})
+		def initialize(*nodes, attributes: {}, infos: nil)
 			@nodes=[]
-			build(*nodes, attributes: {})
+			build(*nodes, attributes: {}, infos: infos)
 		end
 		def each(&b)
 			@nodes.each(&b)
@@ -145,8 +145,14 @@ module DR
 		end
 
 		#add a node (and its edges, recursively)
-		def add_node(node, children: [], parents: [], attributes: {})
+		def add_node(node, children: [], parents: [], attributes: {}, infos: nil)
 			graph_node=new_node(node,**attributes)
+			if infos.respond_to?(:call)
+				info=infos.call(node)||{}
+				children.concat([*info[:children]])
+				parents.concat([*info[:parents]])
+				attributes.merge!(info[:attributes]||{})
+			end
 			if node.is_a?(Node) and node.graph != self
 				graph_node.add_child(* node.children.map {|c| add_node(c,**attributes)})
 				graph_node.add_parent(* node.parents.map {|c| add_node(c,**attributes)})
@@ -157,15 +163,15 @@ module DR
 		end
 
 		#build from a list of nodes or hash
-		def build(*nodes, attributes: {})
+		def build(*nodes, attributes: {}, infos: nil)
 			nodes.each do |node|
 				case node
 				when Hash
 					node.each do |name,children|
-						add_node(name,children: [*children], attributes: attributes)
+						add_node(name,children: [*children], attributes: attributes, infos: infos)
 					end
 				else
-					add_node(node,**attributes)
+					add_node(node,**attributes, infos: infos)
 				end
 			end
 			self

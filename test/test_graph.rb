@@ -43,4 +43,24 @@ describe DR::Graph do
 			@graph.nodes.length.must_equal 3
 		end
 	end
+
+	describe "It works with a lambda to describe the graph" do
+		before do
+			infos=-> (node) do
+				case node
+				when "foo"
+					return {children: ["bar","baz"]}
+				when "bar"
+					return {children: ["baz"]}
+				when "baz"
+					return {children: "foo", attributes: {real: true}}
+				end
+			end
+			@graph=DR::Graph.new(*["foo","bar","baz"],infos: infos)
+		end
+
+		it "It builds the graph" do
+			@graph.nodes.length.must_equal 3
+		end
+	end
 end
