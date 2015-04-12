@@ -191,7 +191,7 @@ module DR
 		end
 
 		def to_nodes(*nodes)
-			nodes.map {|n| self[n]}
+			nodes.map {|n| self[n]}.compact
 		end
 
 		#return the connected set containing nodes (following the direction
