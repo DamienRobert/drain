@@ -110,6 +110,9 @@ module DR
 		def to_a
 			return @nodes
 		end
+		def to_h(methods: [:children,:parents,:attributes], compact: true, recursive: true)
+			Converter.to_hash(@nodes, methods:methods, recursive: recursive, compact: compact)
+		end
 		def [](node)
 			if node.is_a?(Node) and node.graph == self
 				return node
@@ -119,6 +122,10 @@ module DR
 				name=node
 			end
 			@nodes.find {|n| n.name == name}
+		end
+
+		def to_children
+			Converter.to_hash(@nodes, methods:[:children], recursive: true, compact: true).map { |k,v| [k.name, v.map(&:name)]}.to_h
 		end
 
 		def inspect

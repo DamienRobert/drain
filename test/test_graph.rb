@@ -11,6 +11,18 @@ describe DR::Graph do
 		@graph.nodes.length.must_equal 3
 	end
 
+	it "accepts :to_a" do
+		@graph.to_a.map(&:name).must_equal(["foo", "bar", "baz"])
+	end
+
+	it "accepts :to_h" do
+		@graph.to_h.first[1].keys == [:children, :parent, :attributes]
+	end
+
+	it "can give a hash of children" do
+		@graph.to_children.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
+	end
+
 	describe "build" do
 		it "accepts a Hash" do
 			@graph.build({"plim" => "foo"})

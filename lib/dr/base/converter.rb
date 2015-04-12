@@ -3,12 +3,16 @@ module DR
 		extend self
 		#convert an obj to hash, using 'methods' for the methods attributes
 		def to_hash(obj=nil, methods:[], recursive: false, check: false, compact: false)
+			return {} if obj.nil?
 			obj||=self
-			klass=obj.class
-			stack=[obj]
+			stack=[*obj]
+			processed=[]
+			klass=stack.first.class
 			h={}
 			while !stack.empty?
 				obj=stack.shift
+				next if processed.include?(obj)
+				processed << obj
 				attributes={}
 				methods.each do |m|
 					next if check and !obj.respond_to? m
