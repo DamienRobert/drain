@@ -15,8 +15,12 @@ describe DR::Graph do
 		@graph.to_a.map(&:name).must_equal(["foo", "bar", "baz"])
 	end
 
-	it "accepts :to_h" do
-		@graph.to_h.first[1].keys == [:children, :parent, :attributes]
+	it "accepts :to_hash" do
+		@graph.to_hash.first[1].keys.must_equal [:children, :parents, :attributes]
+	end
+	
+	it "can be converted to a hash" do
+		@graph.to_h.must_equal ({"foo"=> ["bar","baz"], "bar" => ["baz"], "baz" => []})
 	end
 
 	it "can give a hash of children" do
