@@ -104,6 +104,24 @@ module DR
 				end
 				return r
 			end
+
+			#from a hash {foo: [:bar, :baz], bar: [:plum, :qux]},
+			#then leaf [:foo] returns [:plum, :qux, :baz]
+			def leafs(nodes)
+				expanded=[] #prevent loops
+				r=nodes.dup
+				begin
+					s,r=r,r.map do |n|
+						if key?(n) && !expanded.include?(n)
+							expanded << n
+							fetch(n)
+						else
+							n
+						end
+					end.flatten
+				end until s==r
+				r
+			end
 		end
 
 		module Proc
