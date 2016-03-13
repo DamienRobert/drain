@@ -117,5 +117,9 @@ module DR
 		def submodules
 			%x/git submodule status/.each_line.map { |l| l.split[1] }
 		end
+
+		def get_config(*args)
+			%x/git config #{args.shelljoin}/
+		end
 	end
 end
