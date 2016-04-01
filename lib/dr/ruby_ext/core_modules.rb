@@ -9,7 +9,7 @@ module DR
 				default=h[:default]
 				r={}
 				each do |el|
-					keys=invh.fetch(value,[default])
+					keys=invh.fetch(el,[default])
 					keys.each do |key|
 						(r[key]||=[]) << el
 					end

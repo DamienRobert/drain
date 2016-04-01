@@ -4,3 +4,4 @@ require 'dr/ruby_ext/core_modules'
 DR::CoreExt.constants.each do |c|
 	Module.const_get(c).module_eval {include Module.const_get("DR::CoreExt::#{c}")}
 end
+[Hash, Array].each {|m| m.include(Enumerable)} #to reinclude
