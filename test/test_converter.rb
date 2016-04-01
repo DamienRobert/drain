@@ -4,7 +4,7 @@ require 'dr/base/converter'
 describe DR::Converter do
 	before do
 		klass=Class.new do
-			attr_reader :a, :h
+			attr_accessor :a, :h
 			def initialize(a,h)
 				@a=a
 				@h=h
@@ -12,7 +12,8 @@ describe DR::Converter do
 		end
 		@obj1=klass.new(["foo","bar"],{foo: :bar})
 		@obj2=klass.new([@obj1],{})
-		@obj3=klass.new([@obj3],{@obj1 => @obj2})
+		@obj3=klass.new([],{@obj1 => @obj2})
+		@obj3.a << @obj3
 	end
 
 	it "Output a hash with the attributes" do
