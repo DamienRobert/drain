@@ -145,11 +145,11 @@ module DR
 			#this should be in the stdlib...
 			def to_proc
 				return lambda do |obj,*args,&b|
-					self.bind(obj).call(*args,&b)
+					bind(obj).call(*args,&b)
 				end
 			end
 			def call(*args,&b)
-				self.to_proc.call(*args,&b)
+				to_proc.call(*args,&b)
 			end
 		end
 
