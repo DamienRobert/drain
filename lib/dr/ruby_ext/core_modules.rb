@@ -124,6 +124,18 @@ module DR
 			end
 		end
 
+		module UnboundMethod
+			#this should be in the stdlib...
+			def to_proc
+				return lambda do |obj,*args,&b|
+					bind(obj).call(*args,&b)
+				end
+			end
+			def call(*args,&b)
+				to_proc.call(*args,&b)
+			end
+		end
+
 		module Proc
 			# Safely call our block, even if the user passed in something of a
 			# different arity (lambda case)
@@ -139,21 +151,7 @@ module DR
 					block.call(*args,**opts)
 				end
 			end
-		end
 
-		module UnboundMethod
-			#this should be in the stdlib...
-			def to_proc
-				return lambda do |obj,*args,&b|
-					bind(obj).call(*args,&b)
-				end
-			end
-			def call(*args,&b)
-				to_proc.call(*args,&b)
-			end
-		end
-
-		module Proc
 			#similar to curry, but pass the provided arguments on the right
 			#(a difference to Proc#curry is that we pass the argument directly, not
 			#via .call)

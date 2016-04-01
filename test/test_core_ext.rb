@@ -2,28 +2,54 @@ require 'helper'
 require 'dr/ruby_ext/core_ext'
 
 describe DR::CoreExt do
-	it "Can filter enumerable" do
-		[1,2,3,4].filter({odd: [1,3], default: :even}).must_equal({:odd=>[1, 3], :even=>[2, 4]})
+	describe Enumerable do
+		it "Can filter enumerable" do
+			[1,2,3,4].filter({odd: [1,3], default: :even}).must_equal({:odd=>[1, 3], :even=>[2, 4]})
+		end
 	end
 
-	it "Implements Hash#deep_merge" do
-		h1 = { x: { y: [4,5,6] }, z: [7,8,9] }
-		h2 = { x: { y: [7,8,9] }, z: 'xyz' }
-		h1.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
-		h2.deep_merge(h1).must_equal({x: {y: [4, 5, 6]}, z: [7, 8, 9]})
-		h1.deep_merge(h2) { |key, old, new| Array(old) + Array(new) }.must_equal({:x=>{:y=>[4, 5, 6, 7, 8, 9]}, :z=>[7, 8, 9, "xyz"]})
+	describe Hash do
+		it "Implements Hash#deep_merge" do
+			h1 = { x: { y: [4,5,6] }, z: [7,8,9] }
+			h2 = { x: { y: [7,8,9] }, z: 'xyz' }
+			h1.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
+			h2.deep_merge(h1).must_equal({x: {y: [4, 5, 6]}, z: [7, 8, 9]})
+			h1.deep_merge(h2) { |key, old, new| Array(old) + Array(new) }.must_equal({:x=>{:y=>[4, 5, 6, 7, 8, 9]}, :z=>[7, 8, 9, "xyz"]})
+		end
+
+		it "Hash#deep_merge merge array when they start with nil" do
+			h1 = { x: { y: [4,5,6] }, z: [7,8,9] }
+			h2 = { x: { y: [nil, 7,8,9] }, z: 'xyz' }
+			h1.deep_merge(h2).must_equal({x: {y: [4,5,6,7, 8, 9]}, z: "xyz"})
+			{x: { y: []} }.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
+			{z: "foo"}.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
+		end
+
+		it "Implements Hash#inverse" do
+			h={ploum: 2, plim: 2, plam: 3}
+			h.inverse.must_equal({2=>[:ploum, :plim], 3=>[:plam]})
+		end
+		
+		it "Implements Hash#keyed_value" do
+			h = { x: { y: { z: "foo" } } }
+			h.keyed_value("x/y/z").must_equal("foo")
+		end
+
+		it "Implements Hash#leafs" do
+			{foo: [:bar, :baz], bar: [:plum, :qux]}.leafs([:foo]).must_equal([:plum, :qux, :baz])
+		end
 	end
 
-	it "Hash#deep_merge merge array when they start with nil" do
-		h1 = { x: { y: [4,5,6] }, z: [7,8,9] }
-		h2 = { x: { y: [nil, 7,8,9] }, z: 'xyz' }
-		h1.deep_merge(h2).must_equal({x: {y: [4,5,6,7, 8, 9]}, z: "xyz"})
-		{x: { y: []} }.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
-		{z: "foo"}.deep_merge(h2).must_equal({x: {y: [7, 8, 9]}, z: "xyz"})
+	describe UnboundMethod do
+		it "Can be converted to a proc" do
+			m=String.instance_method(:length)
+			["foo", "ploum"].map(&m).must_equal([3,5])
+		end
+		it "Can call" do
+			String.instance_method(:length).call("foo").must_equal(3)
+		end
 	end
 
-	it "Implements Hash#inverse" do
-		h={ploum: 2, plim: 2, plam: 3}
-		h.inverse.must_equal({2=>[:ploum, :plim], 3=>[:plam]})
+	describe Proc do
 	end
 end
