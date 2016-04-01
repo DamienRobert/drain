@@ -41,3 +41,24 @@ class TestMetaExt < Minitest::Test
 		test1.baz
 	end
 end
+
+describe DR::Meta do
+	it "Can convert a class to module" do
+		(Class.new { include DR::Meta.refined_module(String) { def length; super+5; end } }).new("foo").length.must_equal(8)
+	end
+
+	it "Can show all ancestors" do
+		DR::Meta.all_ancestors("foo").include?(String.singleton_class).must_equal(true)
+	end
+
+	it "Can generate bound methods" do
+		m=DR::Meta.get_bound_method("foo", :bar) do |x|
+			self+x
+		end
+		m.call("bar").must_equal("foobar")
+	end
+
+	it "Can apply unbound methods" do
+		DR::Meta.apply(method: String.instance_method(:length), to: "foo").must_equal(3)
+	end
+end

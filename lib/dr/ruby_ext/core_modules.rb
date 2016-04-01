@@ -126,6 +126,9 @@ module DR
 
 		module UnboundMethod
 			#this should be in the stdlib...
+			#Note: this is similar to Symbol#to_proc which works like this:
+			#  foo=:foo.to_proc; foo.call(obj,*args) #=> obj.method(:foo).call(*args)
+			#  => :length.to_proc.call("foo") #=> 3
 			def to_proc
 				return lambda do |obj,*args,&b|
 					bind(obj).call(*args,&b)

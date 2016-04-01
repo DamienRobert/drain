@@ -2,17 +2,26 @@ module DR
 	module Meta
 		extend self
 		#from http://stackoverflow.com/questions/18551058/better-way-to-turn-a-ruby-class-into-a-module-than-using-refinements
+		#See http://stackoverflow.com/questions/28649472/ruby-refinements-subtleties
+		#for an explanation on why we use module_eval instead of yield: yield
+		#does not change 'self' and 'klass' so the methods defined in the block
+		#would be on the receiver, not the anonymous module
+		#
 		#convert a class into a module using refinements
 		#ex: (Class.new { include Meta.refined_module(String) { def length; super+5; end } }).new("foo").length #=> 8
-		def refined_module(klass)
+		def refined_module(klass,&b)
 			klass=klass.singleton_class unless Module===klass
 			Module.new do
 				include refine(klass) {
-					yield if block_given?
+					module_eval(&b) if block_given?
 				}
 			end
 		end
 
+		#find the ancestors of obj, its singleton class, its
+		#singleton_singleton_class. To avoid going to infinity, we only add a
+		#singleton_class when its ancestors contains new modules we have not
+		#seen.
 		def all_ancestors(obj)
 			obj=obj.singleton_class unless Module===obj
 			found=[]
@@ -40,13 +49,10 @@ module DR
 			end
 		end
 
-		#If we don't want to extend a module with Meta, we can still do
+		#apply is a 'useless' wrapper to .call, but it also works for UnboundMethod.
+		#  See also dr/core_ext that adds 'UnboundMethod#call'
+		#=> If we don't want to extend a module with Meta, we can still do
 		#Meta.apply(String,method: Meta.instance_method(:include_ancestors),to: self)
-		#Note: another way is to use Symbold#to_proc which works like this:
-		#foo=:foo.to_proc; foo.call(obj,*args) #=> obj.method(:foo).call(*args)
-		#essentially apply is a 'useless' wrapper to .call, but it also works
-		#for UnboundMethod. See also dr/core_ext that add
-		#'UnboundMethod#call'
 		def apply(*args,method: nil, to: self, **opts,&block)
 			#note, in to self is Meta, except if we include it in another
 			#module so that it would make sense
@@ -96,7 +102,7 @@ module DR
 		end
 
 		#include_ancestor includes all modules ancestor, so one can do
-		#singleton_class.include_ancestors(m) to have a fully featured extend
+		#singleton_class.include_ancestors(String) to include the Module ancestors of String into the class
 		def include_ancestors(m)
 			ancestors=m.respond_to?(:ancestors) ? m.ancestors : m.singleton_class.ancestors
 			ancestors.reverse.each do |m|
@@ -104,8 +110,7 @@ module DR
 			end
 		end
 
-		#include a module and extend its singleton_class (along with its ancestors)
-		def include_complete(obj)
+		def include_all_ancestors(obj)
 			ancestors=Meta.all_ancestors(obj)
 			ancestors.reverse.each do |m|
 				include m if m.class==Module
@@ -113,11 +118,11 @@ module DR
 		end
 
 		# module Z
-		# 	def x; "x"; end
+		#		def x; "x"; end
 		# end
 		# module Enumerable
-		# 	extend MetaModule
-		# 	full_include Z
+		#		extend MetaModule
+		#		full_include Z
 		# end
 		# Array.new.x => "x"
 		def full_include other
@@ -167,6 +172,10 @@ module DR
 			end
 		end
 
+		#add_methods(method1, method2, ...)
+		#add_methods({name1: method1, name2: method2, ...})
+		#add_methods(aClass, :method_name1, :method_name2)
+		#add_methods(aClass, {new_name1: :method_name1, new_name2: :method_name2})
 		def add_methods(*args)
 			return if args.empty?
 			if Module === args.first
