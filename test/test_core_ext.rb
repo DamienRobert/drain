@@ -51,5 +51,51 @@ describe DR::CoreExt do
 	end
 
 	describe Proc do
+		# fails due to ruby bug on double splat
+		# it "call_block does not worry about arity of lambda" do
+		# 	(->(x,y) {x+y}).call_block(1,2,3).must_equal(3)
+		# end
+
+		it "Can do rcurry" do
+			l=->(x,y) {"#{x}: #{y}"}
+			m=l.rcurry("foo")
+			m.call("bar").must_equal("bar: foo")
+		end
+
+		it "Can compose functions" do
+			somme=->(x,y) {x+y}
+			carre=->(x) {x^2}
+			carre.compose(somme).(2,3).must_equal(25)
+		end
+
+		it "Can uncurry functions" do
+			(->(x) {->(y) {x+y}}).uncurry.(2,3).must_equal(5)
+			(->(x,y) {x+y}).curry.uncurry.(2,3).must_equal(5)
+		end
+	end
+
+	describe Array do
+		it "Can be converted to proc (providing extra arguments)" do
+			["ploum","plam"].map(&[:+,"foo"]).must_equal(["ploumfoo", "plamfoo"])
+		end
+	end
+
+	describe Object do
+		it "this can change the object" do
+			"foo".this {|s| s.size}.+(1).must_equal(4)
+		end
+
+		it "and_this emulates the Maybe Monad" do
+			"foo".and_this {|s| s.size}.must_equal(3)
+			nil.and_this {|s| s.size}.must_equal(nil)
+		end
+	end
+
+	describe DR::RecursiveHash do
+		it "Generates keys when needed" do
+			h=DR::RecursiveHash.new
+			h[:foo][:bar]=3
+			h.must_equal({foo: {bar: 3}})
+		end
 	end
 end

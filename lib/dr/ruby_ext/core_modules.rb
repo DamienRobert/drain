@@ -140,15 +140,15 @@ module DR
 			# Safely call our block, even if the user passed in something of a
 			# different arity (lambda case)
 			def call_block(*args,**opts)
-				if block.arity >= 0
-					case block.arity
+				if arity >= 0
+					case arity
 					when 0
-						block.call(**opts)
+						call(**opts)
 					else
-						block.call(args[0...block.arity],**opts)
+						call(args[0...arity],**opts)
 					end
 				else
-					block.call(*args,**opts)
+					call(*args,**opts)
 				end
 			end
 
@@ -156,7 +156,7 @@ module DR
 			#(a difference to Proc#curry is that we pass the argument directly, not
 			#via .call)
 			def rcurry(*args,&b)
-				return Proc.new do |*a,&b|
+				return ::Proc.new do |*a,&b|
 					self.call(*a,*args,&b)
 				end
 			end
@@ -165,7 +165,7 @@ module DR
 			#f.compose(g).(5,6)
 			def compose(g)
 				lambda do |*a,&b|
-					self.call(g.call(*a,&b))
+					self.call(*g.call(*a,&b))
 				end
 			end
 
