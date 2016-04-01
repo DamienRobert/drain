@@ -64,7 +64,7 @@ describe DR::CoreExt do
 
 		it "Can compose functions" do
 			somme=->(x,y) {x+y}
-			carre=->(x) {x^2}
+			carre=->(x) {x*x}
 			carre.compose(somme).(2,3).must_equal(25)
 		end
 
