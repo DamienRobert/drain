@@ -87,7 +87,7 @@ describe DR::CoreExt do
 
 		it "and_this emulates the Maybe Monad" do
 			"foo".and_this {|s| s.size}.must_equal(3)
-			nil.and_this {|s| s.size}.must_equal(nil)
+			assert_nil nil.and_this {|s| s.size}
 		end
 	end
 
