@@ -118,6 +118,7 @@ module DR
 			return @nodes
 		end
 		def to_hash(methods: [:children,:parents,:attributes], compact: true, recursive: true)
+			require 'dr/base/converter'
 			Converter.to_hash(@nodes, methods: methods, recursive: recursive, compact: compact)
 		end
 		def [](node)
@@ -136,6 +137,7 @@ module DR
 		end
 
 		def to_children
+			require 'dr/base/converter'
 			Converter.to_hash(@nodes, methods:[:children], recursive: true, compact: true).map { |k,v| [k.name, v.map(&:name)]}.to_h
 		end
 
