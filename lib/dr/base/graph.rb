@@ -21,6 +21,13 @@ module DR
 			return @name <=> other.name
 		end
 
+		def ancestors
+			self.graph.ancestors(self, ourselves: false)
+		end
+		def descendants
+			self.graph.descendants(self, ourselves: false)
+		end
+
 		NodeError=Class.new(RuntimeError)
 		def check_node(node)
 			raise NodeError.new("wrong class: #{node.class}") unless node.is_a?(Node)
@@ -213,8 +220,9 @@ module DR
 
 		#return the connected set containing nodes (following the direction
 		#given)
-		def connected(*nodes, down:true, up:true)
+		def connected(*nodes, down:true, up:true, ourselves: true)
 			nodes=to_nodes(*nodes)
+			onodes=nodes.dup
 			found=[]
 			while !nodes.empty?
 				node=nodes.shift
@@ -225,6 +233,7 @@ module DR
 				new_nodes-=(found+nodes)
 				nodes.concat(new_nodes.to_a)
 			end
+			found-=onodes if ourselves
 			return found
 		end
 		#return all parents

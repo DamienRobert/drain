@@ -23,6 +23,18 @@ describe DR::Graph do
 		@graph.to_h.must_equal ({"foo"=> ["bar","baz"], "bar" => ["baz"], "baz" => []})
 	end
 
+	it "can give a node" do
+		@graph["foo"].class.must_equal DR::Node
+	end
+
+	it "can give descendants" do
+		@graph["foo"].descendants.map(&:to_s).must_equal(["bar", "baz"])
+	end
+
+	it "can give ancestors" do
+		@graph["baz"].ancestors.map(&:to_s).must_equal(["foo", "bar"])
+	end
+
 	it "can give a hash of children" do
 		@graph.to_children.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
 	end
