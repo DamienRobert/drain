@@ -6,31 +6,30 @@ module DR
 		#takes a string 'name:value' and return name and value
 		#can specify a default value; if the default is true we match
 		#no-name as name:false
-		def parse_namevalue(nameval, sep: ':', default: nil)
+		def parse_namevalue(nameval, sep: ':', default: nil, symbolize: true)
 			name,*val=nameval.split(sep)
 			if val.empty?
+				value=default
 				if default == true
 					#special case where if name begins by no- we return false
-					if name =~ /^no-(.*)$/
-						return $1, false
-					else
-						return name, true
+					name.to_s.match(/^no-(.*)$/) do |m| 
+						name=m[1]
+						value=false
 					end
-				else
-					return name, default
 				end
 			else
 				value=val.join(sep)
-				return name,value
 			end
+			name=name.to_sym if symbolize
+			return name,value
 		end
 
 		#takes a string as "name:value!option1=ploum!option2=plam,name2:value2!!globalopt=plim,globalopt2=plam"
 		#and return the hash
 		#{values: {name: value, name2: value2},
-		# localopt: {name: {option1:ploum,option2:plam}},
-		# globalopt: {globalopt: plim, globalopt2: plam},
-		# opt: {name: {option1:ploum,option2:plam,globalopt: plim, globalopt2: plam}, name2:{{globalopt: plim, globalopt2: plam}}}
+		# local_opts: {name: {option1:ploum,option2:plam}},
+		# global_opts: {globalopt: plim, globalopt2: plam},
+		# opts: {name: {option1:ploum,option2:plam,globalopt: plim, globalopt2: plam}, name2:{{globalopt: plim, globalopt2: plam}}}
 		def parse_string(s)
 			r={values: {}, local_opts: {}, global_opts: {}, opts: {}}
 			args,*globopts=s.split('!!')
