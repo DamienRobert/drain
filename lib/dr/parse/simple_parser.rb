@@ -30,6 +30,13 @@ module DR
 		# local_opts: {name: {option1:ploum,option2:plam}},
 		# global_opts: {globalopt: plim, globalopt2: plam},
 		# opts: {name: {option1:ploum,option2:plam,globalopt: plim, globalopt2: plam}, name2:{{globalopt: plim, globalopt2: plam}}}
+		#
+		#Algo: split on 'args!!globopts'
+		#  globopts are split on ',' or '!!'
+		#  args are split on ',' into parameters
+		#  parameters are split on 'args!local_opts'
+		#  args are split on 'name:value' using parse_namevalue
+		#  local_opts are splits on 'opt=value" using parse_namevalue
 		def parse_string(s)
 			r={values: {}, local_opts: {}, global_opts: {}, opts: {}}
 			args,*globopts=s.split('!!')

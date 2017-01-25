@@ -31,11 +31,11 @@ describe DR::SimpleParser do
 			DR::SimpleParser.parse_string("foo:bar,ploum:plim")[:values].must_equal({foo: "bar", ploum: "plim"})
 		end
 		it "can handle options" do
-			DR::SimpleParser.parse_string("name1:value1!option1=ploum!option2=plam,name2:value2!!globalopt1=foo,globalopt2=bar").must_equal({
+			DR::SimpleParser.parse_string("name1:value1!option1=ploum!option2=plam!option3,name2:value2!!globalopt1=foo,globalopt2=bar").must_equal({
 			values: {name1: "value1", name2: "value2"},
-			local_opts: {name1: {option1:"ploum",option2:"plam"}, name2: {}},
+			local_opts: {name1: {option1:"ploum",option2:"plam",option3:true}, name2: {}},
 			global_opts: {globalopt1: "foo", globalopt2: "bar"},
-			opts: {name1: {option1:"ploum",option2:"plam",globalopt1:"foo", globalopt2: "bar"}, name2:{globalopt1: "foo", globalopt2: "bar"}}})
+			opts: {name1: {option1:"ploum",option2:"plam",option3:true,globalopt1:"foo", globalopt2: "bar"}, name2:{globalopt1: "foo", globalopt2: "bar"}}})
 		end
 	end
 end

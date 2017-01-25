@@ -98,7 +98,7 @@ module DR
 			def keyed_value(key, sep: "/")
 				r=self.dup
 				return r if key.empty?
-				key.split(sep).each do |k|
+				key.to_s.split(sep).each do |k|
 					k=k.to_sym if r.key?(k.to_sym) && !r.key?(k)
 					r=r[k]
 				end
