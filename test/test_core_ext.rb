@@ -38,8 +38,8 @@ describe DR::CoreExt do
 		it "Implements Hash#set_keyed_value" do
 			h = { x: { y: { z: "foo" } } }
 			h.set_keyed_value("x/y/z","bar").must_equal({ x: { y: { z: "bar" } } })
-			h.set_keyed_value("x/y","bar").must_equal({ x: { y: "bar" } })
-			h.set_keyed_value("z/y","bar").must_equal({ x: { y: {z: "bar"} } , z: {y: "bar"}})
+			h.set_keyed_value("x/y","bar2").must_equal({ x: { y: "bar2" } })
+			h.set_keyed_value("z/y","bar3").must_equal({ x: { y: "bar2" } , z: {y: "bar3"}})
 		end
 
 		it "Implements Hash#leafs" do

@@ -107,7 +107,7 @@ module DR
 
 			#take a key of the form ploum/plam/plim
 			#and return self[:ploum][:plam][:plim]=value
-			def set_keyed_value!(key,value, sep: "/", symbolize: true)
+			def set_keyed_value(key,value, sep: "/", symbolize: true)
 				r=self
 				*keys,last=key.to_s.split(sep)
 				keys.each do |k|
@@ -118,9 +118,6 @@ module DR
 				last=last.to_sym if symbolize
 				r[last]=value
 				self
-			end
-			def set_keyed_value(*args)
-				self.dup.set_keyed_value!(*args)
 			end
 
 			#from a hash {foo: [:bar, :baz], bar: [:plum, :qux]},
