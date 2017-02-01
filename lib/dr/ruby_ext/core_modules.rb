@@ -105,6 +105,24 @@ module DR
 				return r
 			end
 
+			#take a key of the form ploum/plam/plim
+			#and return self[:ploum][:plam][:plim]=value
+			def set_keyed_value!(key,value, sep: "/", symbolize: true)
+				r=self
+				*keys,last=key.to_s.split(sep)
+				keys.each do |k|
+					k=k.to_sym if (symbolize || r.key?(k.to_sym)) and !r.key?(k)
+					r[k]={} unless r.key?(k)
+					r=r[k]
+				end
+				last=last.to_sym if symbolize
+				r[last]=value
+				self
+			end
+			def set_keyed_value(*args)
+				self.dup.set_keyed_value!(*args)
+			end
+
 			#from a hash {foo: [:bar, :baz], bar: [:plum, :qux]},
 			#then leaf [:foo] returns [:plum, :qux, :baz]
 			def leafs(nodes)

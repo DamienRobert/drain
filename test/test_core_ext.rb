@@ -35,6 +35,13 @@ describe DR::CoreExt do
 			h.keyed_value("x/y/z").must_equal("foo")
 		end
 
+		it "Implements Hash#set_keyed_value" do
+			h = { x: { y: { z: "foo" } } }
+			h.set_keyed_value("x/y/z","bar").must_equal({ x: { y: { z: "bar" } } })
+			h.set_keyed_value("x/y","bar").must_equal({ x: { y: "bar" } })
+			h.set_keyed_value("z/y","bar").must_equal({ x: { y: {z: "bar"} } , z: {y: "bar"}})
+		end
+
 		it "Implements Hash#leafs" do
 			{foo: [:bar, :baz], bar: [:plum, :qux]}.leafs([:foo]).must_equal([:plum, :qux, :baz])
 		end
