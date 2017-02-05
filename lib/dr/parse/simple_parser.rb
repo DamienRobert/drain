@@ -24,7 +24,7 @@ module DR
 			return name,value
 		end
 
-		#takes a string as "name:value!option1=ploum!option2=plam,name2:value2!!globalopt=plim,globalopt2=plam"
+		#takes a string as "name:value!option1=ploum!option2=plam,name2:value2!!globalopt=plim,globalopt2=plam!!globalopt3=plom,globalopt4=plim"
 		#and return the hash
 		#{values: {name: value, name2: value2},
 		# local_opts: {name: {option1:ploum,option2:plam}},
@@ -37,20 +37,20 @@ module DR
 		#  parameters are split on 'args!local_opts'
 		#  args are split on 'name:value' using parse_namevalue
 		#  local_opts are splits on 'opt=value" using parse_namevalue
-		def parse_string(s)
+		def parse_string(s, arg_split:',',globalopts_separator:'!!',globopts_split:arg_split, valuesep: ':', default: nil, opt_valuesep: '=', opt_default: true,opts_split: '!')
 			r={values: {}, local_opts: {}, global_opts: {}, opts: {}}
-			args,*globopts=s.split('!!')
-			globopts.map {|g| g.split(',')}.flatten.each do |g|
-				name,value=parse_namevalue(g, sep: '=', default: true)
+			args,*globopts=s.split(globalopts_separator)
+			globopts.map {|g| g.split(globopts_split)}.flatten.each do |g|
+				name,value=parse_namevalue(g, sep: opt_valuesep, default: default)
 				r[:global_opts][name]=value
 			end
-			args.split(',').each do |arg|
-				arg,*localopts=arg.split('!')
-				name,value=parse_namevalue(arg)
+			args.split(arg_split).each do |arg|
+				arg,*localopts=arg.split(opts_split)
+				name,value=parse_namevalue(arg, sep: valuesep, default: default)
 				r[:values][name]=value
 				r[:local_opts][name]={}
 				localopts.each do |o|
-					oname,ovalue=parse_namevalue(o, sep: '=', default: true)
+					oname,ovalue=parse_namevalue(o, sep: opt_valuesep, default: opt_default)
 					r[:local_opts][name][oname]=ovalue
 				end
 				r[:local_opts].each do |name,hash|
