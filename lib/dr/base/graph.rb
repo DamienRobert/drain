@@ -235,7 +235,7 @@ module DR
 				new_nodes-=(found+nodes)
 				nodes.concat(new_nodes.to_a)
 			end
-			found-=onodes if ourselves
+			found-=onodes if !ourselves
 			return found
 		end
 		#return all parents
