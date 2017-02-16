@@ -239,14 +239,14 @@ module DR
 			return found
 		end
 		#return all parents
-		def ancestors(*nodes)
+		def ancestors(*nodes, ourselves: true)
 			nodes=to_nodes(*nodes)
-			connected(*nodes, up:true, down:false)
+			connected(*nodes, up:true, down:false, ourselves: ourselves)
 		end
 		#return all childern
-		def descendants(*nodes)
+		def descendants(*nodes, ourselves: true)
 			nodes=to_nodes(*nodes)
-			connected(*nodes, up:false, down:true)
+			connected(*nodes, up:false, down:true, ourselves: ourselves)
 		end
 
 		#from a list of nodes, return all nodes that are not descendants of
@@ -265,6 +265,7 @@ module DR
 			end
 			unneeded
 		end
+		#like unneeded(descendants(*nodes))
 		#return all dependencies that are not needed by any more nodes, except
 		#the ones we are removing
 		#If some dependencies should be kept (think manual install), add them

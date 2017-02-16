@@ -27,12 +27,22 @@ describe DR::Graph do
 		@graph["foo"].class.must_equal DR::Node
 	end
 
-	it "can give descendants" do
+	it "can give descendants of a node" do
 		@graph["foo"].descendants.map(&:to_s).must_equal(["bar", "baz"])
 	end
 
-	it "can give ancestors" do
+	it "can give ancestors of a node" do
 		@graph["baz"].ancestors.map(&:to_s).must_equal(["foo", "bar"])
+	end
+
+	it "can show all ancestors of nodes" do
+		@graph.ancestors("baz","bar").map(&:to_s).must_equal(["baz", "bar", "foo"])
+		@graph.ancestors("baz","bar", ourselves: false).map(&:to_s).must_equal(["foo"])
+	end
+
+	it "can show all descendants of nodes" do
+		@graph.descendants("foo","bar").map(&:to_s).must_equal(["foo", "bar", "baz"])
+		@graph.descendants("foo","bar", ourselves: false).map(&:to_s).must_equal(["baz"])
 	end
 
 	it "can give a hash of children" do
@@ -48,6 +58,9 @@ describe DR::Graph do
 	it "detects unneeded nodes" do
 		@graph.unneeded("foo","bar").map(&:name).must_equal ["foo","bar"]
 		@graph.unneeded("bar").map(&:name).must_equal []
+	end
+	it "detects unneeded descendants" do
+		@graph.unneeded_descendants("foo").map(&:name).must_equal ["foo", "bar", "baz"]
 	end
 
 	describe "It works with a cycle" do
