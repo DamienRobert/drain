@@ -1,8 +1,8 @@
 module DR
 	module Lambda
 		extend self
-		#standard ruby: col.map(&f)
-		#Here: Lambda.map(f,col1,col2,...)
+		#standard ruby: col.map(&f) for one variable
+		#Here: Lambda.map(f,col1,col2,...) for several variables
 		#Other implementation:
 		#(shift cols).zip(cols).map {|a| f.call(*a)}
 		#but our implementation stops as soon as a collection is empty
