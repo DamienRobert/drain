@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 require 'yaml'
 
 Gem::Specification.new do |gem|
@@ -10,8 +8,8 @@ Gem::Specification.new do |gem|
                   lib_dir = File.join(File.dirname(__FILE__),'lib')
                   $LOAD_PATH << lib_dir unless $LOAD_PATH.include?(lib_dir)
 
-                  require 'drain/version'
-                  Drain::VERSION
+                  require 'dr/version'
+                  DR::VERSION
                 end
 
   gem.summary     = gemspec['summary']
