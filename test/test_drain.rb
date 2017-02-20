@@ -1,5 +1,5 @@
 require 'helper'
-require 'dr'
+require 'drain'
 
 class TestDrain < Minitest::Test
 
