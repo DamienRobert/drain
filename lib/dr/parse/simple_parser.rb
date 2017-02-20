@@ -37,11 +37,14 @@ module DR
 		#  parameters are split on 'args!local_opts'
 		#  args are split on 'name:value' using parse_namevalue
 		#  local_opts are splits on 'opt=value" using parse_namevalue
-		def parse_string(s, arg_split:',',globalopts_separator:'!!',globopts_split:arg_split, valuesep: ':', default: nil, opt_valuesep: '=', opt_default: true,opts_split: '!')
+		def parse_string(s, arg_split:',', valuesep: ':', default: nil,
+				opt_valuesep: '=', opt_default: true, opts_split: '!',
+				globalopts_separator: '!!', globopts_split: arg_split, 
+				globalopts_valuesep: opt_valuesep, globalopts_default: opt_default)
 			r={values: {}, local_opts: {}, global_opts: {}, opts: {}}
 			args,*globopts=s.split(globalopts_separator)
 			globopts.map {|g| g.split(globopts_split)}.flatten.each do |g|
-				name,value=parse_namevalue(g, sep: opt_valuesep, default: default)
+				name,value=parse_namevalue(g, sep: globalopts_valuesep, default: globalopts_default)
 				r[:global_opts][name]=value
 			end
 			args.split(arg_split).each do |arg|
