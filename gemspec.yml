@@ -8,6 +8,7 @@ email: Damien.Olivier.Robert+gems@gmail.com
 homepage: https://github.com/DamienRobert/drain#readme
 
 development_dependencies:
-  minitest: ~> 5.0
-  rubygems-tasks: ~> 0.2
-  yard: ~> 0.8
+  minitest: "~> 5.0"
+  rake: "~> 10"
+  rubygems-tasks: "~> 0.2"
+  yard: "~> 0.8"

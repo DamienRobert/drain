@@ -1,10 +1,12 @@
 # drain
 
 * [Homepage](https://github.com/DamienRobert/drain#readme)
-* [Gems]("https://rubygems.org/gems/drain)
 * [Issues](https://github.com/DamienRobert/drain/issues)
-* [Documentation](http://rubydoc.info/gems/drain/frames)
+* [Documentation](http://rubydoc.info/gems/drain)
 * [Email](mailto:Damien.Olivier.Robert+gems at gmail.com)
+
+[![Gem Version](https://img.shields.io/gem/v/drain.svg)](https://rubygems.org/gems/drain)
+[![Build Status](https://travis-ci.org/DamienRobert/drain.svg?branch=master)](https://travis-ci.org/DamienRobert/drain)
 
 ## Description
 
@@ -23,7 +25,7 @@ The Api is far from stable yet, so use at your own risk!
 
 Copyright © 2015–2017 Damien Robert
 
-MIT License. See {file:LICENSE.txt} for details.
+MIT License. See [LICENSE.txt](./LICENSE.txt) for details.
 
 Some of the code is inspired by other project, in general I give proper
-Acknowledgement in the corresponding file.
+acknowledgement in the corresponding file.

@@ -1,1 +1,6 @@
---markup markdown -M kramdown --title "drain Documentation" --protected
+--markup markdown
+--title "drain Documentation"
+--protected
+-
+ChangeLog.md
+LICENSE.txt
