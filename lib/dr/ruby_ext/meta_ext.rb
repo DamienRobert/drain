@@ -2,10 +2,7 @@ module DR
 	module Meta
 		extend self
 		#from http://stackoverflow.com/questions/18551058/better-way-to-turn-a-ruby-class-into-a-module-than-using-refinements
-		#See http://stackoverflow.com/questions/28649472/ruby-refinements-subtleties
-		#for an explanation on why we use module_eval instead of yield: yield
-		#does not change 'self' and 'klass' so the methods defined in the block
-		#would be on the receiver, not the anonymous module
+		#See also http://stackoverflow.com/questions/28649472/ruby-refinements-subtleties
 		#
 		#convert a class into a module using refinements
 		#ex: (Class.new { include Meta.refined_module(String) { def length; super+5; end } }).new("foo").length #=> 8

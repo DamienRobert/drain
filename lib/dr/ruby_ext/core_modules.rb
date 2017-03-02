@@ -238,5 +238,6 @@ module DR
 		end
 	end
 	RecursiveHash=Recursive.recursive_constructor(Hash)
+	#For an individual hash: hash = Hash.new {|h,k| h[k] = h.class.new(&h.default_proc) }
 	#Arrays don't accept blocks in the same way as Hashs, we need to pass a length parameter, so we can't use DR::RecursiveHash(Array)
 end
