@@ -1,14 +1,14 @@
 module DR
 	class Eruby
 		#complement TOPLEVEL_BINDING
-		EMPTY_BINDING = binding()
+		EMPTY_BINDING = binding
 
 		module ClassHelpers
 			#process some ruby code
 			#run '_src' in its own execution context
 			#instead of binding(), binding: TOPLEVEL_BINDING may be useful to not
 			#pollute the source
-			def process_ruby(_src, src_info: nil, context: self, eval_binding: binding, wrap: :proc)
+			def process_ruby(_src, src_info: nil, context: nil, eval_binding: binding, wrap: :proc, variables: nil)
 				#stolen from Erubis
 				if _src.respond_to?(:read)
 					src_info=_src unless src_info
@@ -23,8 +23,7 @@ module DR
 					when :module; "Module.new { |_context| #{_src} }"
 					end
 				_proc=eval(to_eval, eval_binding, "(process_ruby #{src_info})")
-				case wrap
-				when :lambda, :proc
+				unless context.nil?
 					#I don't think there is much value [*] to wrap _src into _proc,
 					#instance_eval("_src") and instance_eval(&_proc) seems to have
 					#the same effect on binding
@@ -38,7 +37,6 @@ module DR
 			end
 
 			def eruby_include(template, opt={})
-				opt={bind: binding}.merge(opt)
 				file=File.expand_path(template)
 				Dir.chdir(File.dirname(file)) do |cwd|
 					erb = Engine.new(File.read(file))
@@ -46,13 +44,20 @@ module DR
 					if opt[:evaluate] or opt[:context]
 						r=erb.evaluate(opt[:context])
 					else
-						r=erb.result(opt[:bind])
+						bind=opt[:bind]||binding
+						r=erb.result(bind)
 					end
 					#if using erubis, it is better to invoke the template in <%= =%> than
 					#to use chomp=true
 					r=r.chomp if opt[:chomp]
 					return r
 				end
+			end
+
+			# add variables values to a binding; variables is a Hash
+			def add_variables(variables, _binding=TOPLEVEL_BINDING)
+				eval _arg.collect{|k,v| "#{k} = _arg[#{k.inspect}]; "}.join, _binding
+				_binding
 			end
 		end
 		extend ClassHelpers
@@ -63,12 +68,11 @@ module DR
 			def result(_binding_or_hash=TOPLEVEL_BINDING)
 				_arg = _binding_or_hash
 				if _arg.is_a?(Hash)
-					_b = binding()
-					eval _arg.collect{|k,v| "#{k} = _arg[#{k.inspect}]; "}.join, _b
+					_b=self.class.add_variables(_arg, binding)
 				elsif _arg.is_a?(Binding)
 					_b = _arg
 				elsif _arg.nil?
-					_b = binding()
+					_b = binding
 				else
 					raise ArgumentError.new("#{self.class.name}#result(): argument should be Binding or Hash but passed #{_arg.class.name} object.")
 				end
