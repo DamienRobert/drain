@@ -15,19 +15,32 @@ module DR
 			BLANK_OBJECT=Object.new
 
 			# add variables values to a binding; variables is a Hash
-			def add_variables(variables, _binding=EMPTY_BINDING)
+			def add_variables(variables, _binding=empty_binding)
 				eval variables.collect{|k,v| "#{k} = variables[#{k.inspect}]; "}.join, _binding
 				_binding
 			end
+
+			#From Tilt/template.rb
+			#return a string extracting local_keys from a hash named _context
+			def local_extraction(local_keys, context_name: '_context')
+				local_keys.map do |k|
+					if k.to_s =~ /\A[a-z_][a-zA-Z_0-9]*\z/
+						"#{k} = #{context_name}[#{k.inspect}]"
+					else
+						raise "invalid locals key: #{k.inspect} (keys must be variable names)"
+					end
+				end.join("\n")+"\n"
+			end
+
 		end
 
 		module EngineHelper
 			### Stolen from erubis
 			## eval(@src) with binding object
-			def result(_binding_or_hash=BindingHelper::EMPTY_BINDING)
+			def result(_binding_or_hash=BindingHelper.empty_binding)
 				_arg = _binding_or_hash
 				if _arg.is_a?(Hash)
-					_b=self.class.add_variables(_arg, binding)
+					_b=BindingHelper.add_variables(_arg, BindingHelper.empty_binding)
 				elsif _arg.is_a?(Binding)
 					_b = _arg
 				elsif _arg.nil?
@@ -44,11 +57,44 @@ module DR
 				#  }.call
 			end
 
-			## invoke context.instance_eval(@src)
-			def evaluate(_context=Context.new, _binding: BindingHelper::EMPTY_BINDING)
-				_context = Context.new(_context) if _context.is_a?(Hash)
-				_proc ||= eval("proc { #{@src} }", _binding, @filename || '(eruby)')
-				return _context.instance_eval(&_proc)
+			#Note that when the result is not used afterwards via "instance_eval"
+			#then the Klass of binding is important when src has 'def foo...'
+			#if set, locals should be an array of variable names
+			def compile(wrap: :proc, bind: BindingHelper.empty_binding, locals: nil, pre: nil, post: nil, context_name: '_context')
+				src=@src
+				src=BindingHelper.local_extraction(locals, context_name: context_name)+src if locals
+				src=pre+"\n"+src if pre
+				src<< post+"\n" if post
+				to_eval=case wrap
+					when :eval; @src
+					when :lambda; "lambda { |#{context_name}| #{src} }"
+					when :proc; "Proc.new { |#{context_name}| #{src} }"
+					when :module; "Module.new { |#{context_name}| #{src} }"
+					when :unbound
+						require 'dr/ruby_ext/meta_ext'
+						return Meta.get_unbound_evalmethod('eruby', src, args: context_name)
+					when :unbound_instance
+						require 'dr/ruby_ext/meta_ext'
+						return Meta.get_unbound_evalmethod('eruby', <<-RUBY, args: context_name)
+							self.instance_eval do
+								#{src}
+							end
+						RUBY
+					else src
+					end
+				return eval(to_eval, bind, "(wrap #{@filename})")
+			end
+
+			## by default invoke context.instance_eval(@src)
+			def evaluate(_context=Context.new, compile: {}, **opts, &b)
+				#I prefer to pass context as a keyword, but we allow to pass it as
+				#an argument to respect erubis's api
+				_context=opts[:context] if opts.key?(:context)
+				#_context = Context.new(_context) if _context.is_a?(Hash)
+				vars=opts[:vars]
+				compile[:locals]||=vars.keys if vars
+				_proc=compile(**compile)
+				Eruby.evaluate(_proc, context: _context, **opts, &b)
 			end
 
 			## if object is an Class or Module then define instance method to it,
@@ -72,99 +118,57 @@ module DR
 				@src=src
 			end
 
-			#From Tilt/template.rb
-			def local_extraction(local_keys, context_name: '_context')
-				local_keys.map do |k|
-					if k.to_s =~ /\A[a-z_][a-zA-Z_0-9]*\z/
-						"#{k} = #{context_name}[#{k.inspect}]"
-					else
-						raise "invalid locals key: #{k.inspect} (keys must be variable names)"
-					end
-				end.join("\n")
+		end
+
+		module ClassHelpers
+			def process_ruby(src, src_info: nil, **opts, &b)
+				Template.new(src, filename: src_info).evaluate(**opts, &b)
 			end
 
-			#Note that when the result is not used afterwards via "instance_eval"
-			#then the Klass of binding is important when src has 'def foo...'
-			#if set, locals should be an array of variable names
-			def wrap(wrap: :proc, eval_binding: BindingHelper::EMPTY_BINDING, locals: nil, pre: nil, post: nil, context_name: '_context')
-				src=@src
-				src=local_extraction(locals, context_name: context_name)+src if locals
-				src=pre+"\n"+src if pre
-				src<< post+"\n" if post
-				to_eval=case wrap
-					when :eval; @src
-					when :lambda; "lambda { |#{context_name}| #{src} }"
-					when :proc; "Proc.new { |#{context_name}| #{src} }"
-					when :module; "Module.new { |#{context_name}| #{src} }"
-					when :unbound
-						require 'dr/ruby_ext/meta_ext'
-						return Meta.get_unbound_evalmethod('eruby', src, args: context_name)
-					when :unbound_instance
-						require 'dr/ruby_ext/meta_ext'
-						return Meta.get_unbound_evalmethod('eruby', <<-RUBY, args: context_name)
-							self.instance_eval do
-								#{src}
-							end
-						RUBY
-					else src
-					end
-				return eval(to_eval, eval_binding, "(wrap #{@filename})")
-			end
-			
-			module ClassHelpers
-				#if set vars should be a hash
-				def evaluate(_proc, context: BLANK_OBJECT, vars: nil, &b)
-					#we can only pass the block b when we get an UnboundMethod
-					if _proc.is_a?(UnboundMethod)
-						if vars
-							_proc.bind(context).call(vars,&b)
-						else
-							_proc.bind(context).call(&b)
-						end
-					elsif _proc.is_a?(String)
-						#in this case we cannot pass vars
-						warn "Cannot pass variables when _proc is a String" unless vars.nil?
-						context.instance_eval(_proc)
+			def evaluate(_proc, context: Context.new, vars: nil, &b)
+				#we can only pass the block b when we get an UnboundMethod
+				if _proc.is_a?(UnboundMethod)
+					if !vars.nil?
+						_proc.bind(context).call(vars,&b)
 					else
-						if vars
+						_proc.bind(context).call(&b)
+					end
+				elsif _proc.is_a?(String)
+					#in this case we cannot pass vars
+					warn "Cannot pass variables when _proc is a String" unless vars.nil?
+					context.instance_eval(_proc)
+				else
+					if context.nil?
+						if !vars.nil?
+							_proc.to_proc.call(vars,&b)
+						else
+							_proc.to_proc(&b)
+						end
+					else
+						warn "Cannot pass block in context.instance_eval" unless b.nil?
+						if !vars.nil?
 							context.instance_exec(vars,&_proc)
 						else
 							context.instance_eval(&_proc)
 						end
 					end
 				end
-
-				def process_ruby(src, src_info: nil, context: nil, wrap: {}, vars: nil, &b)
-					t=Template.new(src, filename: src_info)
-					p=t.wrap(**wrap)
-					unless context.nil?
-						self.evaluate(p, context: context, vars: vars, &b)
-					else
-						p
-					end
-				end
 			end
-			extend ClassHelpers
 
-		end
-
-		module ClassHelpers
-			include Template::ClassHelpers
-
-			def eruby_include(template, opt={})
+			def include(template, **opts)
 				file=File.expand_path(template)
 				Dir.chdir(File.dirname(file)) do |cwd|
 					erb = Engine.new(File.read(file))
 					#if context is not empty, then we probably want to evaluate
-					if opt[:evaluate] or opt[:context]
-						r=erb.evaluate(opt[:context])
+					if opts[:evaluate] or opts[:context]
+						r=erb.evaluate(opts[:context])
 					else
-						bind=opt[:bind]||binding
+						bind=opts[:bind]||binding
 						r=erb.result(bind)
 					end
 					#if using erubis, it is better to invoke the template in <%= =%> than
 					#to use chomp=true
-					r=r.chomp if opt[:chomp]
+					r=r.chomp if opts[:chomp]
 					return r
 				end
 			end
@@ -236,7 +240,7 @@ module DR
 			end
 		end
 
-		def to_hash
+		def to_h
 			hash = {}
 			self.keys.each { |key| hash[key] = self[key] }
 			return hash
