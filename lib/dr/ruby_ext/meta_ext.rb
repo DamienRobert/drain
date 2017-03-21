@@ -34,14 +34,14 @@ module DR
 			return found
 		end
 
-		#add extend_ancestors and extend_complete to Object
+		# add extend_ancestors and full_extend to Object
 		def extend_object
 			include_ancestors=Meta.method(:include_ancestors)
-			include_complete=Meta.method(:include_complete)
+			include_complete=Meta.method(:full_include)
 			Object.define_method(:extend_ancestors) do |m|
 				include_ancestors.bind(singleton_class).call(m)
 			end
-			Object.define_method(:extend_complete) do |m|
+			Object.define_method(:full_extend) do |m|
 				include_complete.bind(singleton_class).call(m)
 			end
 		end
@@ -71,6 +71,31 @@ module DR
 			obj.singleton_class.send(:remove_method,method_name)
 			method
 		end
+
+		#Taken from sinatra/base.rb: return an unbound method from a block, with
+		#owner the current module
+		#Conversely, from a (bound) method, calling to_proc (hence &m) gives a lambda
+		#Note: rather than doing 
+		#m=get_unbound_method('',&block);m.bind(obj).call(args)
+		#one could do obj.instance_exec(args,&block)
+		def get_unbound_method(method_name, &block)
+			define_method(method_name, &block)
+			method = instance_method method_name
+			remove_method method_name
+			method
+		end
+
+		def get_unbound_evalmethod(method_name, method_str, args: '')
+			module_eval <<-RUBY
+				def #{method_name}(#{args})
+					#{method_str}
+				end
+			RUBY
+			method = instance_method method_name
+			remove_method method_name
+			method
+		end
+
 	end
 
 	#helping with metaprograming facilities
@@ -130,19 +155,6 @@ module DR
 					mod.send :include, this if mod < self
 				end
 			end
-		end
-
-		#Taken from sinatra/base.rb: return an unbound method from a block, with
-		#owner the current module
-		#Conversely, from a (bound) method, calling to_proc (hence &m) gives a lambda
-		#Note: rather than doing 
-		#m=get_unbound_method('',&block);m.bind(obj).call(args)
-		#one could do obj.instance_exec(args,&block)
-		def get_unbound_method(method_name, &block)
-			define_method(method_name, &block)
-			method = instance_method method_name
-			remove_method method_name
-			method
 		end
 
 		#essentially like define_method, but can pass a Method or an UnboundMethod

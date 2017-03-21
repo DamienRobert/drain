@@ -1,40 +1,155 @@
 module DR
 	class Eruby
-		#complement TOPLEVEL_BINDING
-		EMPTY_BINDING = binding
-
-		module ClassHelpers
-			#process some ruby code
-			#run '_src' in its own execution context
-			#instead of binding(), binding: TOPLEVEL_BINDING may be useful to not
-			#pollute the source
-			def process_ruby(_src, src_info: nil, context: nil, eval_binding: binding, wrap: :proc, variables: nil)
-				#stolen from Erubis
-				if _src.respond_to?(:read)
-					src_info=_src unless src_info
-					_src=_src.read
-				end
-				to_eval=case wrap
-					#todo: a lambda with local parameters to simulate local
-					#variables, cf Tilt
-					when :eval; _src
-					when :lambda; "lambda { |_context| #{_src} }"
-					when :proc; "Proc.new { |_context| #{_src} }"
-					when :module; "Module.new { |_context| #{_src} }"
-					end
-				_proc=eval(to_eval, eval_binding, "(process_ruby #{src_info})")
-				unless context.nil?
-					#I don't think there is much value [*] to wrap _src into _proc,
-					#instance_eval("_src") and instance_eval(&_proc) seems to have
-					#the same effect on binding
-					#[*] apart from passing _context to _src, but we have 'self' already
-					#- it allows also to set up block local $SAFE level
-					#- and we can use break while this is not possible with a string
-					context.instance_eval(&_proc)
-				else
-					_proc
+		module BindingHelper
+			extend self
+			#complement TOPLEVEL_BINDING
+			def empty_binding
+				#wraps into anonymous module so that 'def foo' do not pollute namespace
+				Module.new do
+					#regenerate a new binding
+					return binding
 				end
 			end
+			#empty binding (at first) that stays the same and can be shared
+			EMPTY_BINDING = empty_binding
+			BLANK_OBJECT=Object.new
+
+			# add variables values to a binding; variables is a Hash
+			def add_variables(variables, _binding=EMPTY_BINDING)
+				eval variables.collect{|k,v| "#{k} = variables[#{k.inspect}]; "}.join, _binding
+				_binding
+			end
+		end
+
+		module EngineHelper
+			### Stolen from erubis
+			## eval(@src) with binding object
+			def result(_binding_or_hash=BindingHelper::EMPTY_BINDING)
+				_arg = _binding_or_hash
+				if _arg.is_a?(Hash)
+					_b=self.class.add_variables(_arg, binding)
+				elsif _arg.is_a?(Binding)
+					_b = _arg
+				elsif _arg.nil?
+					_b = binding
+				else
+					raise ArgumentError.new("#{self.class.name}#result(): argument should be Binding or Hash but passed #{_arg.class.name} object.")
+				end
+				return eval(@src, _b, (@filename || '(eruby'))
+				#erb.rb:
+				#  if @safe_level
+				#  proc {
+				#		 $SAFE = @safe_level
+				#		 eval(@src, b, (@filename || '(erb)'), @lineno)
+				#  }.call
+			end
+
+			## invoke context.instance_eval(@src)
+			def evaluate(_context=Context.new, _binding: BindingHelper::EMPTY_BINDING)
+				_context = Context.new(_context) if _context.is_a?(Hash)
+				_proc ||= eval("proc { #{@src} }", _binding, @filename || '(eruby)')
+				return _context.instance_eval(&_proc)
+			end
+
+			## if object is an Class or Module then define instance method to it,
+			## else define singleton method to it.
+			def def_method(object, method_name, filename=nil)
+				m = object.is_a?(Module) ? :module_eval : :instance_eval
+				object.__send__(m, "def #{method_name}; #{@src}; end", filename || @filename || '(eruby)')
+				#erb.rb: src = self.src.sub(/^(?!#|$)/) {"def #{methodname}\n"} << "\nend\n" #This pattern insert the 'def' after lines with leading comments
+			end
+		end
+
+		class Template
+			include EngineHelper
+
+			def initialize(src, filename: nil)
+				if src.respond_to?(:read)
+					filename=src unless filename
+					src=src.read
+				end
+				@filename=filename || self.class.inspect
+				@src=src
+			end
+
+			#From Tilt/template.rb
+			def local_extraction(local_keys, context_name: '_context')
+				local_keys.map do |k|
+					if k.to_s =~ /\A[a-z_][a-zA-Z_0-9]*\z/
+						"#{k} = #{context_name}[#{k.inspect}]"
+					else
+						raise "invalid locals key: #{k.inspect} (keys must be variable names)"
+					end
+				end.join("\n")
+			end
+
+			#Note that when the result is not used afterwards via "instance_eval"
+			#then the Klass of binding is important when src has 'def foo...'
+			#if set, locals should be an array of variable names
+			def wrap(wrap: :proc, eval_binding: BindingHelper::EMPTY_BINDING, locals: nil, pre: nil, post: nil, context_name: '_context')
+				src=@src
+				src=local_extraction(locals, context_name: context_name)+src if locals
+				src=pre+"\n"+src if pre
+				src<< post+"\n" if post
+				to_eval=case wrap
+					when :eval; @src
+					when :lambda; "lambda { |#{context_name}| #{src} }"
+					when :proc; "Proc.new { |#{context_name}| #{src} }"
+					when :module; "Module.new { |#{context_name}| #{src} }"
+					when :unbound
+						require 'dr/ruby_ext/meta_ext'
+						return Meta.get_unbound_evalmethod('eruby', src, args: context_name)
+					when :unbound_instance
+						require 'dr/ruby_ext/meta_ext'
+						return Meta.get_unbound_evalmethod('eruby', <<-RUBY, args: context_name)
+							self.instance_eval do
+								#{src}
+							end
+						RUBY
+					else src
+					end
+				return eval(to_eval, eval_binding, "(wrap #{@filename})")
+			end
+			
+			module ClassHelpers
+				#if set vars should be a hash
+				def evaluate(_proc, context: BLANK_OBJECT, vars: nil, &b)
+					#we can only pass the block b when we get an UnboundMethod
+					if _proc.is_a?(UnboundMethod)
+						if vars
+							_proc.bind(context).call(vars,&b)
+						else
+							_proc.bind(context).call(&b)
+						end
+					elsif _proc.is_a?(String)
+						#in this case we cannot pass vars
+						warn "Cannot pass variables when _proc is a String" unless vars.nil?
+						context.instance_eval(_proc)
+					else
+						if vars
+							context.instance_exec(vars,&_proc)
+						else
+							context.instance_eval(&_proc)
+						end
+					end
+				end
+
+				def process_ruby(src, src_info: nil, context: nil, wrap: {}, vars: nil, &b)
+					t=Template.new(src, filename: src_info)
+					p=t.wrap(**wrap)
+					unless context.nil?
+						self.evaluate(p, context: context, vars: vars, &b)
+					else
+						p
+					end
+				end
+			end
+			extend ClassHelpers
+
+		end
+
+		module ClassHelpers
+			include Template::ClassHelpers
 
 			def eruby_include(template, opt={})
 				file=File.expand_path(template)
@@ -53,55 +168,9 @@ module DR
 					return r
 				end
 			end
-
-			# add variables values to a binding; variables is a Hash
-			def add_variables(variables, _binding=TOPLEVEL_BINDING)
-				eval _arg.collect{|k,v| "#{k} = _arg[#{k.inspect}]; "}.join, _binding
-				_binding
-			end
 		end
+
 		extend ClassHelpers
-
-		module EngineHelper
-			### Stolen from erubis
-			## eval(@src) with binding object
-			def result(_binding_or_hash=TOPLEVEL_BINDING)
-				_arg = _binding_or_hash
-				if _arg.is_a?(Hash)
-					_b=self.class.add_variables(_arg, binding)
-				elsif _arg.is_a?(Binding)
-					_b = _arg
-				elsif _arg.nil?
-					_b = binding
-				else
-					raise ArgumentError.new("#{self.class.name}#result(): argument should be Binding or Hash but passed #{_arg.class.name} object.")
-				end
-				return eval(@src, _b, (@filename || '(erubis'))
-				#erb.rb:
-				#  if @safe_level
-				#  proc {
-				#    $SAFE = @safe_level
-				#    eval(@src, b, (@filename || '(erb)'), @lineno)
-				#  }.call
-			end
-
-			## invoke context.instance_eval(@src)
-			def evaluate(_context=Context.new)
-				_context = Context.new(_context) if _context.is_a?(Hash)
-				#return _context.instance_eval(@src, @filename || '(erubis)')
-				#@_proc ||= eval("proc { #{@src} }", Erubis::EMPTY_BINDING, @filename || '(erubis)')
-				_proc ||= eval("proc { #{@src} }", binding(), @filename || '(eruby)')
-				return _context.instance_eval(&_proc)
-			end
-
-			## if object is an Class or Module then define instance method to it,
-			## else define singleton method to it.
-			def def_method(object, method_name, filename=nil)
-				m = object.is_a?(Module) ? :module_eval : :instance_eval
-				object.__send__(m, "def #{method_name}; #{@src}; end", filename || @filename || '(erubis)')
-				#erb.rb: src = self.src.sub(/^(?!#|$)/) {"def #{methodname}\n"} << "\nend\n" #This pattern insert the 'def' after lines with leading comments
-			end
-		end
 
 		begin
 			require 'erubi'
