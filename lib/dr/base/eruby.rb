@@ -59,7 +59,7 @@ module DR
 
 			#Note that when the result is not used afterwards via "instance_eval"
 			#then the Klass of binding is important when src has 'def foo...'
-			#if set, locals should be an array of variable names
+			#If set, locals should be an array of variable names
 			def compile(wrap: :proc, bind: BindingHelper.empty_binding, locals: nil, pre: nil, post: nil, context_name: '_context')
 				src=@src
 				src=BindingHelper.local_extraction(locals, context_name: context_name)+src if locals
@@ -71,16 +71,23 @@ module DR
 					when :proc; "Proc.new { |#{context_name}| #{src} }"
 					when :module; "Module.new { |#{context_name}| #{src} }"
 					when :unbound
+						#wrapping in a method allows us to pass a block to a code
+						#calling yield
 						require 'dr/ruby_ext/meta_ext'
 						return Meta.get_unbound_evalmethod('eruby', src, args: context_name)
 					when :unbound_instance
+						#here we wrap in a method that the calls instance_eval
 						require 'dr/ruby_ext/meta_ext'
 						return Meta.get_unbound_evalmethod('eruby', <<-RUBY, args: context_name)
 							self.instance_eval do
 								#{src}
 							end
 						RUBY
-					else src
+					when :string
+						src.to_s
+					else 
+						warn "wrap meth #{warn} not understood, defaulting to String"
+						src
 					end
 				return eval(to_eval, bind, "(wrap #{@filename})")
 			end
@@ -90,9 +97,11 @@ module DR
 				#I prefer to pass context as a keyword, but we allow to pass it as
 				#an argument to respect erubis's api
 				_context=opts[:context] if opts.key?(:context)
-				#_context = Context.new(_context) if _context.is_a?(Hash)
+				_context = Context.new(_context) if _context.is_a?(Hash)
 				vars=opts[:vars]
 				compile[:locals]||=vars.keys if vars
+				#to pass a block we need to wrap in a method
+				compile[:wrap]||=:unbound_instance if b
 				_proc=compile(**compile)
 				Eruby.evaluate(_proc, context: _context, **opts, &b)
 			end
@@ -128,6 +137,7 @@ module DR
 			def evaluate(_proc, context: Context.new, vars: nil, &b)
 				#we can only pass the block b when we get an UnboundMethod
 				if _proc.is_a?(UnboundMethod)
+					vars={} if _proc.arity > 0 and vars.nil?
 					if !vars.nil?
 						_proc.bind(context).call(vars,&b)
 					else
