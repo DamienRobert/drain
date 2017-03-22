@@ -115,6 +115,10 @@ module DR
 			@nodes.each(&b)
 		end
 
+		def clone
+			Graph.new.build(*all, recursive: false)
+		end
+
 		def to_a
 			return @nodes
 		end
@@ -152,7 +156,7 @@ module DR
 		def new_node(node,**attributes)
 			n=case node
 			when Node
-				node.graph == self ? node : Node.new(node.name, graph: self, attributes: node.attributes)
+				node.graph == self ? node : new_node(node.name, **node.attributes)
 			else
 				@nodes.find {|n| n.name == node} || Node.new(node, graph: self)
 			end
@@ -160,9 +164,10 @@ module DR
 			n
 		end
 
-		#add a node (and its edges, recursively)
-		def add_node(node, children: [], parents: [], attributes: {}, infos: nil)
-			graph_node=new_node(node,**attributes)
+		# add a node (and its edges, recursively by default)
+		# TODO in case of a loop this is currently non terminating when recursive
+		# we would need to keep track of handled nodes
+		def add_node(node, children: [], parents: [], attributes: {}, infos: nil, recursive: true)
 			if infos.respond_to?(:call)
 				info=infos.call(node)||{}
 				children.concat([*info[:children]])
@@ -170,24 +175,30 @@ module DR
 				attributes.merge!(info[:attributes]||{})
 			end
 			if node.is_a?(Node) and node.graph != self
-				graph_node.add_child(* node.children.map {|c| add_node(c,**attributes)})
-				graph_node.add_parent(* node.parents.map {|c| add_node(c,**attributes)})
+				children.concat(node.children)
+				parents.concat(node.parents)
 			end
-			graph_node.add_child(*children.map { |child| add_node(child) })
-			graph_node.add_parent(*parents.map { |parent| add_node(parent) })
+			graph_node=new_node(node,**attributes)
+			if recursive
+				graph_node.add_child(*children.map { |child| add_node(child) })
+				graph_node.add_parent(*parents.map { |parent| add_node(parent) })
+			else
+				#just add the children
+				graph_node.add_child(*children.map { |child| new_node(child) })
+			end
 			graph_node
 		end
 
 		#build from a list of nodes or hash
-		def build(*nodes, attributes: {}, infos: nil)
+		def build(*nodes, attributes: {}, infos: nil, recursive: true)
 			nodes.each do |node|
 				case node
 				when Hash
 					node.each do |name,children|
-						add_node(name,children: [*children], attributes: attributes, infos: infos)
+						add_node(name,children: [*children], attributes: attributes, infos: infos, recursive: recursive)
 					end
 				else
-					add_node(node, attributes: attributes, infos: infos)
+					add_node(node, attributes: attributes, infos: infos, recursive: recursive)
 				end
 			end
 			self
@@ -198,6 +209,13 @@ module DR
 		end
 		def roots
 			@nodes.select{ |n| n.parents.length == 0}.sort
+		end
+
+		def |(graph)
+			build(*graph.all, recursive: false)
+		end
+		def +(graph)
+			clone.|(graph)
 		end
 
 		def dump(mode: :graph, nodes_list: :roots, show_attr: true, **unused)
@@ -254,7 +272,8 @@ module DR
 
 		#from a list of nodes, return all nodes that are not descendants of
 		#other nodes in the graph
-		#needed: the nodes whose descendants we keep
+		#needed: the nodes whose descendants we keep, by default the complement
+		#of nodes
 		def unneeded(*nodes, needed: nil)
 			nodes=to_nodes(*nodes)
 			if needed
@@ -269,10 +288,10 @@ module DR
 			unneeded
 		end
 		#like unneeded(descendants(*nodes))
-		#return all dependencies that are not needed by any more nodes, except
-		#the ones we are removing
+		#return all dependencies that are not needed by any more other nodes (except
+		#the ones we are removing)
 		#If some dependencies should be kept (think manual install), add them
-		#to the unneeded parameter
+		#to the needed parameter
 		def unneeded_descendants(*nodes, needed:[])
 			nodes=to_nodes(*nodes)
 			needed=to_nodes(*needed)
@@ -291,26 +310,38 @@ module DR
 
 		#return the subgraph containing all the nodes passed as parameters,
 		#and the complementary graph. The union of both may not be the full
-		#graph [edges] in case the components are not connected
+		#graph [missing edges] in case the components are connected
 		def subgraph(*nodes)
 			nodes=to_nodes(*nodes)
 			subgraph=Graph.new()
 			compgraph=Graph.new()
 			@nodes.each do |node|
 				if nodes.include?(node)
-					n=subgraph.build(node.name)
+					n=subgraph.new_node(node)
 					node.children.each do |c|
-						n.add_child(c) if nodes.include?(c)
+						n.add_child(subgraph.new_node(c)) if nodes.include?(c)
 					end
 				else
-					n=compgraph.build(node.name)
+					n=compgraph.new_node(node)
 					node.children.each do |c|
-						n.add_child(c) unless nodes.include?(c)
+						n.add_child(compgraph.new_node(c)) unless nodes.include?(c)
 					end
 				end
 			end
 			return subgraph, compgraph
 		end
 
+		def -(other)
+			if other.is_a? Graph
+				#in this case we want to remove the edges
+				other.each do |n|
+					self[n].rm_child(*n.children)
+				end
+			else
+				#we remove a list of nodes
+				nodes=@nodes-to_nodes(*other)
+				subgraph(*nodes)
+			end
+		end
 	end
 end

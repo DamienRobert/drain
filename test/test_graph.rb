@@ -90,6 +90,29 @@ describe DR::Graph do
 
 		it "It builds the graph" do
 			@graph.nodes.length.must_equal 3
+			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["foo"]})
+			@graph['baz'].attributes.must_equal(real: true)
+		end
+	end
+
+	describe "It can be merged with another graph" do
+		before do
+			@graph2=DR::Graph.new({"foo" => ["bar"], "baz" => ["bar", "qux"]})
+		end
+
+		it "Graph2 is well defined" do
+			@graph2.nodes.map(&:name).must_equal(%w(foo bar baz qux))
+		end
+
+		it "Can be merged in place" do
+			@graph | @graph2
+			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
+		end
+
+		it "Can be merged" do
+			@graph3 = @graph + @graph2
+			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
+			@graph3.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
 		end
 	end
 end
