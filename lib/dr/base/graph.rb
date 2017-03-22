@@ -77,7 +77,7 @@ module DR
 		end
 
 		STEP = 4
-		def to_s(show_attr: false)
+		def to_s(show_attr: true)
 			@name + (show_attr && ! attributes.empty? ? " #{attributes}" : "")
 		end
 		def inspect
@@ -114,6 +114,7 @@ module DR
 		def each(&b)
 			@nodes.each(&b)
 		end
+
 		def to_a
 			return @nodes
 		end
@@ -121,6 +122,7 @@ module DR
 			require 'dr/base/converter'
 			Converter.to_hash(@nodes, methods: methods, recursive: recursive, compact: compact)
 		end
+
 		def [](node)
 			if node.is_a?(Node) and node.graph == self
 				return node
@@ -133,8 +135,9 @@ module DR
 		end
 		def to_h
 			h=to_hash(methods: [:children])
-			Hash[h.map {|k,v| [k.to_s, v.map(&:to_s)]}]
+			Hash[h.map {|k,v| [k.name, v.map(&:name)]}]
 		end
+		alias to_children to_h
 
 		def to_children
 			require 'dr/base/converter'
@@ -184,7 +187,7 @@ module DR
 						add_node(name,children: [*children], attributes: attributes, infos: infos)
 					end
 				else
-					add_node(node,**attributes, infos: infos)
+					add_node(node, attributes: attributes, infos: infos)
 				end
 			end
 			self
