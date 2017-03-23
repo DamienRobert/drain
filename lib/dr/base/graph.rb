@@ -210,6 +210,9 @@ module DR
 		def roots
 			@nodes.select{ |n| n.parents.length == 0}.sort
 		end
+		def bottom
+			@nodes.select{ |n| n.children.length == 0}.sort
+		end
 
 		def |(graph)
 			build(*graph.all, recursive: false)
@@ -311,10 +314,10 @@ module DR
 		#return the subgraph containing all the nodes passed as parameters,
 		#and the complementary graph. The union of both may not be the full
 		#graph [missing edges] in case the components are connected
-		def subgraph(*nodes)
+		def subgraph(*nodes, complement: false)
 			nodes=to_nodes(*nodes)
 			subgraph=Graph.new()
-			compgraph=Graph.new()
+			compgraph=Graph.new() if complement
 			@nodes.each do |node|
 				if nodes.include?(node)
 					n=subgraph.new_node(node)
@@ -322,13 +325,15 @@ module DR
 						n.add_child(subgraph.new_node(c)) if nodes.include?(c)
 					end
 				else
-					n=compgraph.new_node(node)
-					node.children.each do |c|
-						n.add_child(compgraph.new_node(c)) unless nodes.include?(c)
+					if complement
+						n=compgraph.new_node(node)
+						node.children.each do |c|
+							n.add_child(compgraph.new_node(c)) unless nodes.include?(c)
+						end
 					end
 				end
 			end
-			return subgraph, compgraph
+			complement ? (return subgraph, compgraph) : (return subgraph)
 		end
 
 		def -(other)
@@ -341,6 +346,32 @@ module DR
 				#we remove a list of nodes
 				nodes=@nodes-to_nodes(*other)
 				subgraph(*nodes)
+			end
+		end
+
+		#Graph.build(nodes,&b) allows to build a graph using &b
+		#if recursive is true each time we get new nodes we add them to the graph
+		#otherwise just run once
+		#if recursive=0 we even restrict the graph to the current nodes
+		#Note: to construct a graph from one node to a list it suffice to call
+		#nodes.map(&b).reduce(:|)
+		def self.build(nodes, recursive: true)
+			g=yield(*nodes)
+			g=Graph.new(g) unless g.is_a?(Graph)
+			new_nodes=g.nodes.map(&:name)-nodes
+			if recursive==0 and !new_nodes.empty?
+				g-(new_nodes)
+			elsif recursive
+				while !new_nodes.empty?
+					g2=yield(*new_nodes)
+					g2=Graph.new(g2) unless g2.is_a?(Graph)
+					g|g2
+					nodes=nodes.concat(new_nodes)
+					new_nodesg.nodes.map(&:name)-nodes
+				end
+				g
+			else
+				g
 			end
 		end
 	end
