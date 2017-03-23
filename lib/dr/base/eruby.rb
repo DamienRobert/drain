@@ -250,6 +250,10 @@ module DR
 			end
 		end
 
+		# Was to_hash, but changed to 'to_h' in commit 25d0e1e4b1a4ada40fd64945eb79823ea074d030
+		# Indeed otherwise passing it to 'evaluate' it get interpreted as the options rather than as a context
+		# cf https://bugs.ruby-lang.org/issues/12884
+		# corrected in ruby 2.4.1?
 		def to_h
 			hash = {}
 			self.keys.each { |key| hash[key] = self[key] }
