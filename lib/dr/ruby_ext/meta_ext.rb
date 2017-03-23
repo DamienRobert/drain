@@ -9,6 +9,9 @@ module DR
 		def refined_module(klass,&b)
 			klass=klass.singleton_class unless Module===klass
 			Module.new do
+				#including the module rather than just returning it allow us to
+				#still be add to use 'using' ('using' does not work directly on
+				#refined modules)
 				include refine(klass) {
 					module_eval(&b) if block_given?
 				}
@@ -50,6 +53,8 @@ module DR
 		#  See also dr/core_ext that adds 'UnboundMethod#call'
 		#=> If we don't want to extend a module with Meta, we can still do
 		#Meta.apply(String,method: Meta.instance_method(:include_ancestors),to: self)
+		#(note that in 'Meta.apply', the default option to 'to:' is self=Meta,
+		#that's why we need to put 'to: self' again)
 		def apply(*args,method: nil, to: self, **opts,&block)
 			#note, in to self is Meta, except if we include it in another
 			#module so that it would make sense
@@ -58,6 +63,7 @@ module DR
 			when UnboundMethod
 				method=method.bind(to)
 			end
+			#We cannot call **opts if opts is empty in case of an empty args, cf https://bugs.ruby-lang.org/issues/10708
 			if opts.empty?
 				method.call(*args,&block)
 			else
@@ -85,6 +91,7 @@ module DR
 			method
 		end
 
+		#like get_unbound_method except we pass a strng rather than a block
 		def get_unbound_evalmethod(method_name, method_str, args: '')
 			module_eval <<-RUBY
 				def #{method_name}(#{args})

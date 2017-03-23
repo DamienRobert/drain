@@ -35,6 +35,14 @@ describe DR::Graph do
 		@graph["baz"].ancestors.map(&:to_s).must_equal(["foo", "bar"])
 	end
 
+	it "can give the root nodes" do
+		@graph.roots.map(&:name).must_equal(["foo"])
+	end
+
+	it "can give the bottom nodes" do
+		@graph.bottom.map(&:name).must_equal(["baz"])
+	end
+
 	it "can show all ancestors of nodes" do
 		@graph.ancestors("baz","bar").map(&:to_s).must_equal(["baz", "bar", "foo"])
 		@graph.ancestors("baz","bar", ourselves: false).map(&:to_s).must_equal(["foo"])
