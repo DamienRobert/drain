@@ -6,12 +6,14 @@ module DR
 		#
 		#convert a class into a module using refinements
 		#ex: (Class.new { include Meta.refined_module(String) { def length; super+5; end } }).new("foo").length #=> 8
+		#This uses the fact that a refining module of klass behaves as if it had
+		#klass has his direct ancestor
 		def refined_module(klass,&b)
 			klass=klass.singleton_class unless Module===klass
 			Module.new do
 				#including the module rather than just returning it allow us to
-				#still be add to use 'using' ('using' does not work directly on
-				#refined modules)
+				#still be able to use 'using' ('using' does not work directly on
+				#refining modules only on the enclosing ones)
 				include refine(klass) {
 					module_eval(&b) if block_given?
 				}

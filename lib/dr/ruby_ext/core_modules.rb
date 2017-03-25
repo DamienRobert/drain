@@ -220,9 +220,9 @@ module DR
 	end
 
 	module CoreRef
-		CoreExt.constants.select {|c| c.is_a?(Class)}.each do |c|
+		CoreExt.constants.select {|c| const_get("::#{c}").is_a?(Class)}.each do |c|
 			refine const_get("::#{c}") do
-				include Module.const_get("CoreExt::#{c}")
+				include CoreExt.const_get(c)
 			end
 		end
 	end
