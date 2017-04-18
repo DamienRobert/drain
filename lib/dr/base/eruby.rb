@@ -130,6 +130,11 @@ module DR
 		end
 
 		module ClassHelpers
+			def process_eruby(eruby_src, **opts, &b)
+				src=Eruby::Engine.new(eruby_src).src
+				process_ruby(src, **opts, &b)
+			end
+
 			def process_ruby(src, src_info: nil, **opts, &b)
 				Template.new(src, filename: src_info).evaluate(**opts, &b)
 			end
