@@ -198,83 +198,82 @@ module DR
 		end
 		#prepend so that we have the same implementation
 		Engine.__send__(:prepend, EngineHelper)
-	end
 
-	## Copy/Pasted from erubis context.rb
-	##
-	## context object for Engine#evaluate
-	##
-	## ex.
-	##	 template = <<'END'
-	##	 Hello <%= @user %>!
-	##	 <% for item in @list %>
-	##		- <%= item %>
-	##	 <% end %>
-	##	 END
-	##
-	##	 context = Erubis::Context.new(:user=>'World', :list=>['a','b','c'])
-	##	 # or
-	##	 # context = Erubis::Context.new
-	##	 # context[:user] = 'World'
-	##	 # context[:list] = ['a', 'b', 'c']
-	##
-	##	 eruby = Erubis::Eruby.new(template)
-	##	 print eruby.evaluate(context)
-	##
-	class Eruby::Context
-		include Enumerable
+		## Copy/Pasted from erubis context.rb
+		## # context object for Engine#evaluate
+		##
+		## ex.
+		##	 template = <<'END'
+		##	 Hello <%= @user %>!
+		##	 <% for item in @list %>
+		##		- <%= item %>
+		##	 <% end %>
+		##	 END
+		##
+		##	 context = Erubis::Context.new(:user=>'World', :list=>['a','b','c'])
+		##	 # or
+		##	 # context = Erubis::Context.new
+		##	 # context[:user] = 'World'
+		##	 # context[:list] = ['a', 'b', 'c']
+		##
+		##	 eruby = Erubis::Eruby.new(template)
+		##	 print eruby.evaluate(context)
+		##
+		class Context
+			include Enumerable
 
-		def initialize(hash=nil)
-			hash.each do |name, value|
-				self[name] = value
-			end if hash
-		end
-
-		def [](key)
-			return instance_variable_get("@#{key}")
-		end
-
-		def []=(key, value)
-			return instance_variable_set("@#{key}", value)
-		end
-
-		def keys
-			return instance_variables.collect { |name| name[1..-1] }
-		end
-
-		def each
-			instance_variables.each do |name|
-				key = name[1..-1]
-				value = instance_variable_get(name)
-				yield(key, value)
+			def initialize(hash=nil)
+				hash.each do |name, value|
+					self[name] = value
+				end if hash
 			end
-		end
 
-		# Was to_hash, but changed to 'to_h' in commit 25d0e1e4b1a4ada40fd64945eb79823ea074d030
-		# Indeed otherwise passing it to 'evaluate' it get interpreted as the options rather than as a context
-		# cf https://bugs.ruby-lang.org/issues/12884
-		# corrected in ruby 2.4.1?
-		def to_h
-			hash = {}
-			self.keys.each { |key| hash[key] = self[key] }
-			return hash
-		end
+			def [](key)
+				return instance_variable_get("@#{key}")
+			end
 
-		def update(context_or_hash)
-			arg = context_or_hash
-			if arg.is_a?(Hash)
-				arg.each do |key, val|
-					self[key] = val
-				end
-			else
-				arg.instance_variables.each do |varname|
-					key = varname[1..-1]
-					val = arg.instance_variable_get(varname)
-					self[key] = val
+			def []=(key, value)
+				return instance_variable_set("@#{key}", value)
+			end
+
+			def keys
+				return instance_variables.collect { |name| name[1..-1] }
+			end
+
+			def each
+				instance_variables.each do |name|
+					key = name[1..-1]
+					value = instance_variable_get(name)
+					yield(key, value)
 				end
 			end
-		end
 
+			# Was to_hash, but changed to 'to_h' in commit 25d0e1e4b1a4ada40fd64945eb79823ea074d030
+			# Indeed otherwise passing it to 'evaluate' it get interpreted as the options rather than as a context
+			# cf https://bugs.ruby-lang.org/issues/12884
+			# corrected in ruby 2.4.1?
+			def to_h
+				hash = {}
+				self.keys.each { |key| hash[key] = self[key] }
+				return hash
+			end
+
+			def update(context_or_hash)
+				arg = context_or_hash
+				if arg.is_a?(Hash)
+					arg.each do |key, val|
+						self[key] = val
+					end
+				else
+					arg.instance_variables.each do |varname|
+						key = varname[1..-1]
+						val = arg.instance_variable_get(varname)
+						self[key] = val
+					end
+				end
+			end
+
+		end
 	end
 
 end
