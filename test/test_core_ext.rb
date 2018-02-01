@@ -3,6 +3,11 @@ require 'dr/ruby_ext/core_modules'
 
 module TestCoreExtRefinements
 	using DR::CoreRef
+	# TODO make refinements work nicely
+end
+
+module TestCoreExt
+	require 'dr/ruby_ext/core_ext'
 	describe DR::CoreExt do
 		describe Enumerable do
 			it "Can filter enumerable" do
