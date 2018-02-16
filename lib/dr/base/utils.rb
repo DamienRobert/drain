@@ -5,10 +5,10 @@ module DR
 			case format.to_s
 			when "json"
 				require 'json'
-				return pretty_print(string.to_json)
+				return pretty_print(string.to_json, pretty: pretty)
 			when "yaml"
 				require "yaml"
-				return pretty_print(string.to_yaml)
+				return pretty_print(string.to_yaml, pretty: pretty)
 			end
 			if pretty.to_s=="color"
 				begin
