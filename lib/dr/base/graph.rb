@@ -109,6 +109,7 @@ module DR
 		include Enumerable
 		def initialize(*nodes, attributes: {}, infos: nil)
 			@nodes=[]
+			# a node can be a Hash or a Node
 			build(*nodes, attributes: {}, infos: infos)
 		end
 		def each(&b)
@@ -214,7 +215,9 @@ module DR
 			@nodes.select{ |n| n.children.length == 0}.sort
 		end
 
+		# allow a hash too
 		def |(graph)
+			graph=Graph.new(graph) unless Graph===graph
 			build(*graph.all, recursive: false)
 		end
 		def +(graph)
