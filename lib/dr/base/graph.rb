@@ -83,24 +83,24 @@ module DR
 		def inspect
 			"#{self.class}: #{to_s(show_attr: true)}"+(graph.nil? ? "" : " (#{graph})")
 		end
-		def to_graph(indent_level: 0, show_attr: true)
-			sout = ""
+		# output like a graph
+		def to_graph(indent_level: 0, show_attr: true, out: [])
 			margin = ''
 			0.upto(indent_level/STEP-1) { |p| margin += (p==0 ? ' ' : '|') + ' '*(STEP - 1) }
 			margin += '|' + '-'*(STEP - 2)
-			sout += margin + "#{to_s(show_attr: show_attr)}\n"
+			out << margin + "#{to_s(show_attr: show_attr)}"
 			@children.each do |child|
-				sout += child.to_graph(indent_level: indent_level+STEP, show_attr: show_attr)
+				child.to_graph(indent_level: indent_level+STEP, show_attr: show_attr, out: out)
 			end
-			return sout
+			return out
 		end
-		def to_dot
-			sout=["\""+name+"\""]
+		def to_dot(out: [])
+			out << "\""+name+"\""
 			@children.each do |child|
-				sout.push  "\"#{@name}\" -> \"#{child.name}\""
-				sout += child.to_dot
+				out <<  "\"#{@name}\" -> \"#{child.name}\""
+				child.to_dot(out: out)
 			end
-			return sout
+			return out
 		end
 	end
 
@@ -224,23 +224,23 @@ module DR
 			clone.|(graph)
 		end
 
-		def dump(mode: :graph, nodes_list: :roots, show_attr: true, **unused)
+		def dump(mode: :graph, nodes_list: :roots, show_attr: true, out: [], **_opts)
 			n=case nodes_list
 				when :roots; roots
 				when :all; all
 				when Symbol; nodes.select {|n| n.attributes[:nodes_list]}
 				else nodes_list.to_a
 			end
-			sout = ""
 			case mode
-			when :graph; n.each do |node| sout+=node.to_graph(show_attr: show_attr) end
-			when :list; n.each do |i| sout+="- #{i}\n" end
+			when :graph; n.each do |node| node.to_graph(show_attr: show_attr, out: out) end
+			when :list; n.each do |i| out << "- #{i}" end
 			when :dot;
-				sout+="digraph gems {\n"
-				sout+=n.map {|node| node.to_dot}.inject(:+).uniq!.join("\n")
-				sout+="}\n"
+				out << "digraph gems {"
+				#out << n.map {|node| node.to_dot}.inject(:+).uniq!.join("\n")
+				n.map {|node| node.to_dot(out: out)}
+				out << "}"
 			end
-			return sout
+			return out
 		end
 
 		def to_nodes(*nodes)
