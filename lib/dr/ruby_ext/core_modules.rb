@@ -66,6 +66,13 @@ module DR
 				self
 			end
 
+			def reverse_merge(other_hash)
+				other_hash.merge(self)
+			end
+			def reverse_deep_merge(other_hash)
+				other_hash.deep_merge(self)
+			end
+
 			#from a hash {key: [values]} produce a hash {value: [keys]}
 			#there is already Hash#invert using Hash#key which does that, but the difference here is that we flatten Enumerable values
 			#h={ploum: 2, plim: 2, plam: 3}
