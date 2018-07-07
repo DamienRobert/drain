@@ -23,7 +23,7 @@ The Api is far from stable yet, so use at your own risk!
 
 ## Copyright
 
-Copyright © 2015–2017 Damien Robert
+Copyright © 2015–2018 Damien Robert
 
 MIT License. See [LICENSE.txt](./LICENSE.txt) for details.
 
