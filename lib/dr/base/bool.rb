@@ -1,15 +1,15 @@
 module DR
   module Bool
     extend(self)
-    def to_bool(el, default=nil)
+    def to_bool(el, default=nil, allow_nil: true)
       case el
       when String
         string=el.chomp
         return true if string =~ (/(true|t|yes|y|1)$/i)
         return false if string.empty? || string =~ (/(false|f|no|n|0)$/i)
-      when Fixnum
+      when Integer
         return ! (el == 0)
-      when Process::Status
+      when ::Process::Status
         exitstatus=el.exitstatus
         return exitstatus == 0
       else
@@ -19,6 +19,7 @@ module DR
         #give an error
       end
       return default unless default.nil?
+      return nil if el.nil? and allow_nil
       raise ArgumentError.new("Invalid value for Boolean: \"#{el}\"")
     end
   end
