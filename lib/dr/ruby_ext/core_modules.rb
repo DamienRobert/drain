@@ -144,6 +144,12 @@ module DR
 				end until s==r
 				r
 			end
+
+			# File activesupport/lib/active_support/core_ext/hash/slice.rb, line 22
+			def slice(*keys)
+			  keys.each_with_object(Hash.new) { |k, hash| hash[k] = self[k] if has_key?(k) }
+			end
+
 		end
 
 		module UnboundMethod

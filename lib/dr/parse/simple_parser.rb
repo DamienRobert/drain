@@ -24,6 +24,24 @@ module DR
 			return name,value
 		end
 
+		# parse opt1=value1:opt2=value2...
+		def parse_options(options, arg_split:':', valuesep: '=', opt_default: true, keyed_sep: "/")
+			return {} unless options
+			parsed_options={}
+			options=options.split(arg_split) unless options.is_a?(Enumerable)
+			options.each do |optvalue|
+				opt,value=DR::SimpleParser.parse_namevalue(optvalue,sep: valuesep, default: opt_default)
+				parsed_options.set_keyed_value(opt,value, sep: keyed_sep)
+			end
+			return parsed_options
+		end
+
+		# parse name:opt1=value1:opt2=value2...
+		def parse_name_options(name, arg_split:':', **keywords)
+			name,*options=name.split(arg_split)
+			return name, parse_options(options, arg_split: arg_split, **keywords)
+		end
+
 		#takes a string as "name:value!option1=ploum!option2=plam,name2:value2!!globalopt=plim,globalopt2=plam!!globalopt3=plom,globalopt4=plim"
 		#and return the hash
 		#{values: {name: value, name2: value2},
