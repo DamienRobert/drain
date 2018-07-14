@@ -145,9 +145,15 @@ module DR
 				r
 			end
 
-			# File activesupport/lib/active_support/core_ext/hash/slice.rb, line 22
-			def slice(*keys)
-			  keys.each_with_object(Hash.new) { |k, hash| hash[k] = self[k] if has_key?(k) }
+			# Adapted from File activesupport/lib/active_support/core_ext/hash/slice.rb, line 22
+			def slice_with_default(*keys, default: nil)
+				keys.each_with_object(::Hash.new) do |k, hash| 
+					if has_key?(k) || default == :default_proc
+						hash[k] = self[k] 
+					else
+						hash[k] = default
+					end
+				end
 			end
 
 		end
