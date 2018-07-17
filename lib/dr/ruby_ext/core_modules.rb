@@ -166,7 +166,7 @@ module DR
 
 			def add_key(*keys, key, value)
 				i=self
-				keys.each_with_object(self.infos) do |k|
+				keys.each do |k|
 					i.key?(k) or i[k]={}
 					i=i[k]
 				end
