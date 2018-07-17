@@ -146,6 +146,8 @@ module DR
 			end
 
 			# Adapted from File activesupport/lib/active_support/core_ext/hash/slice.rb, line 22
+			# Note that ruby has Hash#slice, but if the key does not exist, we
+			# cannot configure a default
 			def slice_with_default(*keys, default: nil)
 				keys.each_with_object(::Hash.new) do |k, hash| 
 					if has_key?(k) || default == :default_proc
@@ -154,6 +156,21 @@ module DR
 						hash[k] = default
 					end
 				end
+			end
+
+			def dig_with_default(*args, default: nil)
+				r=dig(*args)
+				return default if r.nil?
+				r
+			end
+
+			def add_key(*keys, key, value)
+				i=self
+				keys.each_with_object(self.infos) do |k|
+					i.key?(k) or i[k]={}
+					i=i[k]
+				end
+				i.key?(key) or i[key]=value
 			end
 
 		end
