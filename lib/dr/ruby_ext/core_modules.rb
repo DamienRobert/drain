@@ -30,12 +30,12 @@ module DR
 			#		#=> {:x=>{:y=>[4, 5, 6, 7, 8, 9]}, :z=>[7, 8, 9, "xyz"]}
 			#
 			#		Adapted from active support
-			def deep_merge(other_hash, &block)
-				dup.deep_merge!(other_hash, &block)
+			def deep_merge(other_hash, **opts, &block)
+				dup.deep_merge!(other_hash, **opts, &block)
 			end
 
 			# Same as +deep_merge+, but modifies +self+.
-			def deep_merge!(other_hash, &block)
+			def deep_merge!(other_hash, append: :auto, &block)
 				return unless other_hash
 				other_hash.each_pair do |k,v|
 					tv = self[k]
@@ -43,17 +43,19 @@ module DR
 					when tv.is_a?(Hash) && v.is_a?(Hash)
 						self[k] = tv.deep_merge(v, &block)
 					when tv.is_a?(Array) && v.is_a?(Array)
-						if v.length > 0 && v.first.nil? then
+						if append==:auto and v.length > 0 && v.first.nil? then
 							#hack: if the array begins with nil, we append the new
 							#value rather than overwrite it
 							v.shift
+							self[k] += v
+						elsif append && append != :auto
 							self[k] += v
 						else
 							self[k] = block && tv ? block.call(k, tv, v) : v
 						end
 					when tv.nil? && v.is_a?(Array)
 						#here we still need to remove nil (see above)
-						if v.length > 0 && v.first.nil? then
+						if append==:auto and v.length > 0 && v.first.nil? then
 							v.shift
 							self[k]=v
 						else
