@@ -166,6 +166,16 @@ module DR
 				r
 			end
 
+			def set_key(*keys, key, value)
+				i=self
+				keys.each do |k|
+					i.key?(k) or i[k]={}
+					i=i[k]
+				end
+				i[key]=value
+				self
+			end
+			# like set_key, but only set the value if it does not exist
 			def add_key(*keys, key, value)
 				i=self
 				keys.each do |k|
@@ -173,6 +183,24 @@ module DR
 					i=i[k]
 				end
 				i.key?(key) or i[key]=value
+				self
+			end
+			#like add_key, but consider the value is an Array and add to it
+			def add_to_key(*keys, key, value)
+				i=self
+				keys.each do |k|
+					i.key?(k) or i[k]={}
+					i=i[k]
+				end
+				if value.is_a?(Hash)
+					v=i[key] || {}
+					v.merge(value)
+				else
+					v=i[key] || []
+					v += Array(value)
+				end
+				i[key]=v
+				self
 			end
 
 		end
