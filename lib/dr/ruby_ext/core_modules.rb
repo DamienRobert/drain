@@ -166,6 +166,15 @@ module DR
 				r
 			end
 
+			def has_keys?(*keys, key)
+				i=self
+				keys.each do |k|
+					i.key?(k) or i[k]={}
+					i=i[k]
+				end
+				i.key?(key)
+			end
+
 			def set_key(*keys, key, value)
 				i=self
 				keys.each do |k|
