@@ -173,7 +173,7 @@ module DR
 					i=i[k]
 				end
 				i[key]=value
-				self
+				# self
 			end
 			# like set_key, but only set the value if it does not exist
 			def add_key(*keys, key, value)
@@ -183,10 +183,11 @@ module DR
 					i=i[k]
 				end
 				i.key?(key) or i[key]=value
-				self
+				# self
+				i[key]
 			end
 			#like add_key, but consider the value is an Array and add to it
-			def add_to_key(*keys, key, value)
+			def add_to_key(*keys, key, value, overwrite: false, uniq: true, deep: false)
 				i=self
 				keys.each do |k|
 					i.key?(k) or i[k]={}
@@ -194,13 +195,18 @@ module DR
 				end
 				if value.is_a?(Hash)
 					v=i[key] || {}
-					v.merge(value)
+					if deep
+						overwrite ? v.deep_merge!(value) : v=value.deep_merge(v)
+					else
+						overwrite ? v.merge!(value) : v=value.merge(v)
+					end
 				else
 					v=i[key] || []
 					v += Array(value)
+					v.uniq! if uniq
 				end
 				i[key]=v
-				self
+				# self
 			end
 
 		end
