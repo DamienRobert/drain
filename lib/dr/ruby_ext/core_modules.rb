@@ -169,7 +169,7 @@ module DR
 			def has_keys?(*keys, key)
 				i=self
 				keys.each do |k|
-					i.key?(k) or i[k]={}
+					i.key?(k) or return false
 					i=i[k]
 				end
 				i.key?(key)
