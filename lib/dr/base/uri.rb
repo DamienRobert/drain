@@ -149,7 +149,7 @@ module DR
 		end
 
 		def self.get_uri_object(uri)
-			uri = URI.parse(uri.to_s) unless uri.is_a?(URI)
+			uri = self.parse(uri.to_s) unless uri.is_a?(URI)
 			uri
 		end
 
@@ -183,5 +183,12 @@ module DR
 			super
 			self.uri = uri
 		end
+
+		class Ssh < URIWrapper
+			def self.parse(s)
+				new(URI::Ssh.parse(s))
+			end
+		end
 	end
+
 end
