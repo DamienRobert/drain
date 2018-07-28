@@ -53,6 +53,11 @@ module URI
 		end
 
 		class Generic < ::URI::Generic
+			# check_host returns `false` for 'foo_bar'
+			# but in ssh config this can be a valid host
+			def check_host(v)
+				return true
+			end
 			# @example
 			#		Generic.build(
 			#			userinfo: 'git',
