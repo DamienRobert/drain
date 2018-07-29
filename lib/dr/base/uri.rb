@@ -23,11 +23,11 @@ module URI
 		# @param url [String] git repository url via ssh protocol
 		# @return [Generic] parsed object
 		protected def internal_parse(uri_string)
-			host_part, path_part = uri_string.split(':', 2)
+			host_part, path_part = uri_string&.split(':', 2)
 			# There may be no user, so reverse the split to make sure host always
 			# is !nil if host_part was !nil.
-			host, userinfo = host_part.split('@', 2).reverse
-			Generic.build(userinfo: userinfo, host: host, path: path_part)
+			host, userinfo = host_part&.split('@', 2)&.reverse
+			Generic.build(userinfo: userinfo, host: host || uri_string, path: path_part)
 		end
 
 		# @param url [String] git repository-ish url
