@@ -63,14 +63,16 @@ module URI
 			#			userinfo: 'git',
 			#			host: 'github.com',
 			#			path: 'packsaddle/ruby-uri-ssh_git.git'
-			#		).to_s
+			#		).to_ssh
 			#		#=> 'git@github.com:packsaddle/ruby-uri-ssh_git.git'
 			#
 			# @return [String] git repository url via ssh protocol
-			def to_s
+			def to_ssh(show_path: true)
 				str = ''
 				str << "#{user}@" if user && !user.empty?
-				str << "#{host}:#{path}"
+				str << "#{host}"
+				str << ":#{path}" if path and show_path
+				str
 			end
 		end
 	end
