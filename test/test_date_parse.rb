@@ -19,6 +19,6 @@ describe DR::DateRange do
 	end
 
 	it "Has time information" do
-		@daterange.t.to_s.must_equal "[[2014-01-02 00:00:00 +0100, 2014-01-03 00:00:00 +0100], [2014-01-05 00:00:00 +0100, 2014-01-05 00:00:00 +0100], [2014-02-01 00:00:00 +0100, 2018-08-03 15:43:32 +0200]]".encode!('US-ASCII')
+		@daterange.t[0].to_s.must_equal "[2014-01-02 00:00:00 +0100, 2014-01-03 00:00:00 +0100]".encode('US-ASCII')
 	end
 end
