@@ -13,14 +13,18 @@ module DR
 
 		def parse(msg, **opts)
 			opts=@opts.merge(opts)
-			sep=opts[:sep] || /,\s*/
+			sep=opts[:sep] || ','
+			# Warning: the delims must take only one char
+			bdelim= opts[:bdelim] || '('
+			edelim= opts[:edelim] || ')'
 			keywords=@keywords.keys
 			keywords_r="(?:"+keywords.map {|k| "(?:"+k+")"}.join("|")+")"
-			reg = %r{(?<kw>#{keywords_r})(?<re>\((?:(?>[^()]+)|\g<re>)*\))}
+			reg = %r{(?<kw>#{keywords_r})(?<re>#{'\\'+bdelim}(?:(?>[^#{'\\'+bdelim}#{'\\'+edelim}]+)|\g<re>)*#{'\\'+edelim})}
 			if (m=reg.match(msg))
 				arg=m[:re][1...m[:re].length-1]
 				arg=parse(arg, **opts)
 				args=arg.split(sep)
+				args=args.map {|a| a.strip} unless opts[:space]
 				key=keywords.find {|k| /#{k}/ =~ m[:kw]}
 				r=@keywords[key].call(*args).to_s
 				msg=m.pre_match+r+parse(m.post_match,**opts)
