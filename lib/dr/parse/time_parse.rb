@@ -30,7 +30,7 @@ module DR
 					t=-t if s[0]=='-'
 				end
 				case t
-					when Time
+				when Time
 				else
 					t=Time.now+t
 				end

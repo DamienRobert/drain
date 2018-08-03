@@ -15,8 +15,9 @@ module DR
 			opts=@opts.merge(opts)
 			sep=opts[:sep] || ','
 			# Warning: the delims must take only one char
-			bdelim= opts[:bdelim] || '('
-			edelim= opts[:edelim] || ')'
+			delims= opts[:delims] || '()'
+			bdelim= delims[0]
+			edelim= delims[1] || bdelim
 			keywords=@keywords.keys
 			keywords_r="(?:"+keywords.map {|k| "(?:"+k+")"}.join("|")+")"
 			reg = %r{(?<kw>#{keywords_r})(?<re>#{'\\'+bdelim}(?:(?>[^#{'\\'+bdelim}#{'\\'+edelim}]+)|\g<re>)*#{'\\'+edelim})}

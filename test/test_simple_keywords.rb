@@ -18,7 +18,11 @@ describe DR::SimpleKeywordsParser do
 	end
 
 	it "Can change delimiters" do
-		@parser.parse("FOO[ ploum , plam  ]", bdelim: '[', edelim: ']').must_equal "FOO: [\"ploum\", \"plam\"]"
+		@parser.parse("FOO[ ploum , plam  ]", delims: '[]').must_equal "FOO: [\"ploum\", \"plam\"]"
+	end
+
+	it "Can have a one caracter delimiter" do
+		@parser.parse("FOO! ploum , plam  !", delims: '!').must_equal "FOO: [\"ploum\", \"plam\"]"
 	end
 
 	it "Can parse keywords inside keywords" do
