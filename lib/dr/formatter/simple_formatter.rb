@@ -1,34 +1,73 @@
 module DR
-	module Formatter
-		extend self
-		def localize(msg, lang: :en, **_opts)
-			case msg
-			when Hash
-				Array(lang).each do |l|
-					return msg[l].to_s if msg.key?(l)
+	class Formatter
+		module Helpers
+			def localize(msg, lang: :en, **_opts)
+				case msg
+				when Hash
+					Array(lang).each do |l|
+						if msg.key?(l)
+							yield(msg[l]) if block_given?
+							return msg[l]
+						end
+					end
+				else
+					msg
 				end
-			else
-				msg.to_s
+			end
+
+			def wrap(content, pre:nil, post:nil)
+				return content if content.nil? or content.empty?
+				pre.to_s+content.to_s+post.to_s
+			end
+
+			def join(*args, pre: "", post: "", pre_item: "", post_item: "", join: :auto, **_opts)
+				args=Array(args)
+				list=args.compact.map {|i| wrap(i, pre: pre_item, post: post_item)}.delete_if {|i| i.empty?}
+				r=list.shift
+				list.each do |s|
+					if join==:auto
+						if r[-1]=="\n" or s[1]=="\n"
+							r+=s
+						else
+							r+=" "+s
+						end
+					else
+						r+=join+s
+					end
+				end
+				r=pre+r+post unless r.nil? or r.empty?
+				r
 			end
 		end
+		extend Helpers
 
-		def wrap(content,pre:nil,post:nil)
-			return content if content.nil? or content.empty?
-			pre.to_s+content.to_s+post.to_s
+		attr_accessor :opts, :meta
+		def initialize(meta={}, **opts)
+			@meta=meta
+			@opts=opts
 		end
 
-		def expand_symbol(sym, meta: nil, expand: true, **opts)
-			return sym if opts[:symbol]==:never
+		def localize(msg, **opts)
+			self.class.localize(msg, **@opts.merge(opts))
+		end
+
+		def join(*args, **opts)
+			opts=@opts.merge(opts)
+			args=Array(args).map {|i| try_expand_symbol(i,**opts)}
+			self.class.localize(*args, **opts)
+		end
+
+		private def metainfo_from_symbol(sym, meta: @meta, **opts)
+			return sym if opts[:meta_symbol]==:never
 			content=case meta
 			when Hash
 				warn "#{sym} not found in #{meta}" unless meta.key?(sym)
 				meta[sym]
 			when Proc
-				meta.call(sym, symbol: symbol, opts: opts)
+				meta.call(sym, **opts)
 			else
 				sym
 			end
-			content=expand(content, **opts) if expand
 			if block_given?
 				yield content, **opts
 			else
@@ -36,7 +75,7 @@ module DR
 			end
 		end
 
-		def get_symbol(sym)
+		private def get_symbol(sym)
 			case sym
 			when Symbol
 				return sym
@@ -45,7 +84,7 @@ module DR
 			end
 			nil
 		end
-		def try_expand_symbol(sym,**opts)
+		private def try_get_symbol(sym,**opts)
 			if (key=get_symbol(sym))
 				expand_symbol(key,**opts)
 			else
@@ -53,31 +92,13 @@ module DR
 			end
 		end
 
-		#if args is of size 1 and an array we join the elements of this array
-		def join(*args, pre: "", post: "", pre_item: "", post_item: "", join: :auto, **opts)
-			args=Array(args)
-			args=args.map {|i| try_expand_symbol(i,**opts)}
-			list=args.compact.map {|i| pre_item+i+post_item}.delete_if {|i| i.empty?}
-			r=list.shift
-			list.each do |s|
-				if join==:auto
-					if r[-1]=="\n" or s[1]=="\n"
-						r+=s
-					else
-						r+=" "+s
-					end
-				else
-					r+=join+s
-				end
-			end
-			r=pre+r+post unless r.nil? or r.empty?
-			r
-		end
-
 		def expand(msg, **opts)
-			langs=Array(opts[:lang]); recursive=opts[:recursive]
+			recursive=opts[:recursive]
 			#if recursive is :first, then we only expand once ore
-			opts[:recursive]=false if recursive==:first
+			if recursive.is_a?(Integer)
+				opts[:recursive]=recursive-1
+				recursive=false if recursive <= 0
+			end
 			case msg
 			when Hash
 				Array(opts[:merge]).each do |key|
@@ -86,8 +107,10 @@ module DR
 						msg.delete(key)
 					end
 				end
-				langs.each do |lang|
-					return expand(msg[lang], **opts) if msg.key?(lang)
+				# we localize after merging potential out types
+				localize(msg, **opts) do |lmsg|
+					# localization do not count as a recursive step
+					return expand(lmsg, **opts)
 				end
 				if recursive
 					msg_exp={}
@@ -103,22 +126,27 @@ module DR
 				end
 			when Symbol
 				opts[:symbol]||=:never
-				expand_symbol(msg,**opts)
+				msg=metainfo_from_symbol(msg,**opts)
+				recursive ? expand(msg, **opts) : msg
 			when Array
 				msg=msg.map {|i| expand(i,**opts)} if recursive
 				opts[:join] ? join(msg, **opts) : msg
 			when String
-				(nmsg=try_expand_symbol(msg,**opts)) and return nmsg
+				(nmsg=try_get_symbol(msg,**opts)) and return nmsg
 				if block_given?
-					yield(String, msg)
+					yield(msg, **opts)
 				else
 					msg
 				end
 			when nil
 				nil
 			else
-				msg
-				#expand(msg.to_s,**opts)
+				if block_given?
+					yield(msg, **opts)
+				else
+					#expand(msg.to_s,**opts)
+					msg
+				end
 			end
 		end
 
