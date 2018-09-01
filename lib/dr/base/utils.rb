@@ -36,5 +36,17 @@ module DR
 			s.gsub(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2').
 				gsub(/([a-z\d])([A-Z])/,'\1_\2').downcase
 		end
+
+		def rsplit(s, sep, num=nil)
+			if num.nil? or num==0
+				s.split(sep)
+			else
+				components=s.split(sep)
+				components+=[nil]*[(num-components.length), 0].max
+				a=components[0..(components.length-num)]
+				b=components[(components.length-num+1)..(components.length-1)]
+				return [a.join(sep), *b]
+			end
+		end
 	end
 end
