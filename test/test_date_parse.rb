@@ -3,6 +3,7 @@ require 'dr/parse/date_parse'
 
 describe DR::DateRange do
 	before do
+		ENV['TZ']='GMT'
 		@daterange=DR::DateRange.parse("2014-01-02 -> 2014-01-03, 2014-01-05, 2014-02 -> :now")
 	end
 
@@ -19,6 +20,6 @@ describe DR::DateRange do
 	end
 
 	it "Has time information" do
-		@daterange.t[0].to_s.must_equal "[2014-01-02 00:00:00 +0100, 2014-01-03 00:00:00 +0100]".encode('US-ASCII')
+		@daterange.t[0].to_s.must_equal "[2014-01-02 00:00:00 +0000, 2014-01-03 00:00:00 +0000]".encode('US-ASCII')
 	end
 end
