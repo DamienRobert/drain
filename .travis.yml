@@ -1,10 +1,9 @@
 ---
 language: ruby
 rvm:
-  - 2.4.0
-  - 2.3.3
-  - 2.2.6
-  - 2.1.10
-  - ruby-head
-  - ruby-head-clang
+  - 2.5.1
+  - 2.4.4
+  - 2.3.7
+  #- ruby-head
+  #- ruby-head-clang
 script: rake test
