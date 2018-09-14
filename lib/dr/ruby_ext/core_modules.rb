@@ -301,6 +301,8 @@ module DR
 	end
 
 	module CoreRef
+		# warning, this only works for methods that don't need to call other
+		# refined methods
 		CoreExt.constants.select {|c| const_get("::#{c}").is_a?(Class)}.each do |c|
 			refine const_get("::#{c}") do
 				include CoreExt.const_get(c)
