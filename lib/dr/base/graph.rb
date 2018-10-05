@@ -7,7 +7,7 @@ module DR
 		attr_reader :graph
 		attr_accessor :name, :attributes, :parents, :children
 		def initialize(name, attributes: {}, graph: nil)
-			@name = name.to_s
+			@name = name
 			@children = []
 			@parents = []
 			@attributes = attributes
@@ -78,7 +78,7 @@ module DR
 
 		STEP = 4
 		def to_s(show_attr: true)
-			@name + (show_attr && ! attributes.empty? ? " #{attributes}" : "")
+			@name.to_s + (show_attr && ! attributes.empty? ? " #{attributes}" : "")
 		end
 		def inspect
 			"#{self.class}: #{to_s(show_attr: true)}"+(graph.nil? ? "" : " (#{graph})")
@@ -110,7 +110,7 @@ module DR
 		def initialize(*nodes, attributes: {}, infos: nil)
 			@nodes=[]
 			# a node can be a Hash or a Node
-			build(*nodes, attributes: {}, infos: infos)
+			build(*nodes, attributes: attributes, infos: infos)
 		end
 		def each(&b)
 			@nodes.each(&b)
@@ -123,6 +123,10 @@ module DR
 		def to_a
 			return @nodes
 		end
+		def names
+			@nodes.map(&:name)
+		end
+
 		def to_hash(methods: [:children,:parents,:attributes], compact: true, recursive: true)
 			require 'dr/base/converter'
 			Converter.to_hash(@nodes, methods: methods, recursive: recursive, compact: compact)
@@ -142,7 +146,7 @@ module DR
 			h=to_hash(methods: [:children])
 			Hash[h.map {|k,v| [k.name, v.map(&:name)]}]
 		end
-		alias to_children to_h
+		#alias to_children to_h
 
 		def to_children
 			require 'dr/base/converter'
@@ -150,8 +154,11 @@ module DR
 		end
 
 		def inspect
-			"#{self.class}: #{map {|x| x.to_s}}"
+			"#{self.class}: #{map {|x| x.to_s(show_attr: false)}}"
 		end
+		# def to_s
+		# 	"#{self.class}: #{map {|x| x.to_s(show_attr: false)}}"
+		# end
 
 		#construct a node (without edges)
 		def new_node(node,**attributes)
