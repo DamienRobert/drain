@@ -107,9 +107,11 @@ module DR
 	class Graph
 		attr_accessor :nodes
 		include Enumerable
+		# note: passing a graph won't work
 		def initialize(*nodes, attributes: {}, infos: nil)
 			@nodes=[]
 			# a node can be a Hash or a Node
+			# so nodes really is a list of subgraphs
 			build(*nodes, attributes: attributes, infos: infos)
 		end
 		def each(&b)
