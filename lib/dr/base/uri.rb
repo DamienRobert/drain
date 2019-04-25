@@ -96,7 +96,9 @@ module DR
 		end
 
 		def to_json(_state = nil)
-			to_h.to_json
+			h=to_h
+			h[:uri]=h[:uri].to_s #h[:uri] is a URIWrapper, so convert it to string so json does not convert it again
+			h.to_json
 		end
 
 		def to_public

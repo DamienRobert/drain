@@ -20,7 +20,7 @@ module DR
 			edelim= delims[1] || bdelim
 			keywords=@keywords.keys
 			keywords_r="(?:"+keywords.map {|k| "(?:"+k+")"}.join("|")+")"
-			reg = %r{(?<kw>#{keywords_r})(?<re>#{'\\'+bdelim}(?:(?>[^#{'\\'+bdelim}#{'\\'+edelim}]+)|\g<re>)*#{'\\'+edelim})}
+			reg = %r{(?<kw>#{keywords_r})(?<re>#{'\\'+bdelim}(?:(?>[^#{'\\'+bdelim}#{edelim == bdelim ? '' : '\\'+edelim}]+)|\g<re>)*#{'\\'+edelim})}
 			if (m=reg.match(msg))
 				arg=m[:re][1...m[:re].length-1]
 				arg=parse(arg, **opts)

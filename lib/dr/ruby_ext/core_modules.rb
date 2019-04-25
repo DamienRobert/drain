@@ -2,9 +2,9 @@ module DR
 	module CoreExt
 		#[Hash, Array].each {|m| m.include(Enumerable)} #to reinclude
 		module Enumerable
-			#Ex: [1,2,3,4].filter({odd: [1,3], default: :even})
+			#Ex: [1,2,3,4].classify({odd: [1,3], default: :even})
 			#=> {:odd=>[1, 3], :even=>[2, 4]}
-			def filter(h)
+			def classify(h)
 				invh=h.inverse
 				default=h[:default]
 				r={}
