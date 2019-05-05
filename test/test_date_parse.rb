@@ -3,8 +3,12 @@ require 'dr/parse/date_parse'
 
 describe DR::DateRange do
 	before do
+		@tz=ENV['TZ']
 		ENV['TZ']='GMT'
 		@daterange=DR::DateRange.parse("2014-01-02 -> 2014-01-03, 2014-01-05, 2014-02 -> :now")
+	end
+	after do
+		ENV['TZ']=@tz
 	end
 
 	it "Can parse dates" do

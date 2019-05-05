@@ -1,6 +1,6 @@
 require 'chronic'
 require 'chronic_duration'
-require 'active_support/time'
+# require 'active_support/time'
 
 module DR
 	module TimeParse
@@ -8,17 +8,17 @@ module DR
 		def time_to_day_range(t)
 			return Chronic.parse(t.to_date, guess:false)
 		end
-		def parse(s, opt={})
+		def parse(s, **opt)
 			return s if Date===s or Time===s
 
-			if !opt[:norange] && s=~/(.*)\.\.(.*)/
-				first=$1
-				second=$2
+			!opt[:norange] and s.match(/(.*)\.\.(.*)/) do |m|
+				first=m[1]
+				second=m[2]
 				opt[:norange]=true
 				return Chronic::Span.new(self.parse(first, opt),self.parse(second,opt))
 			end
 
-			if not s.present?
+			if s.match(/\A[[:space:]]*\z/) # blank
 				t=Time.now
 			elsif s[0] =~ /[+-]/
 				#if s=+3.years-1.minutes
@@ -53,19 +53,25 @@ module DR
 
 	end
 end
-#Examples:
-#DR::TimeParse.parse("+100..tomorrow")
-#first: +100, second: tomorrow
-#=> 2014-08-22 11:20:31 +0200..2014-08-23 12:00:00 +0200
-#[74] pry(main)> DR::TimeParse.parse("now..in seven days")
-#first: now, second: in seven days
-#=> 2014-08-22 11:20:25 +0200..2014-08-29 11:20:25 +0200
-#[75] pry(main)> DR::TimeParse.parse("today")
-#=> 2014-08-22 17:30:00 +0200
-#[76] pry(main)> DR::TimeParse.parse("today",range: true)
-#=> 2014-08-22 11:00:00 +0200..2014-08-23 00:00:00 +0200
-#[181] pry(main)> DR::TimeParse.parse("-3 years 2 minutes")
-#-94672920
-#=> 2011-08-22 20:01:34 +0200
-#[182] pry(main)> DR::TimeParse.parse("+3.years+2.days")
-#=> 2017-08-24 14:04:08 +0200
+
+=begin Examples:
+
+DR::TimeParse.parse("+100..tomorrow") #first: +100, second: tomorrow
+=> 2014-08-22 11:20:31 +0200..2014-08-23 12:00:00 +0200
+
+DR::TimeParse.parse("now..in seven days") #first: now, second: in seven days
+=> 2014-08-22 11:20:25 +0200..2014-08-29 11:20:25 +0200
+
+DR::TimeParse.parse("today")
+=> 2014-08-22 17:30:00 +0200
+
+DR::TimeParse.parse("today",range: true)
+=> 2014-08-22 11:00:00 +0200..2014-08-23 00:00:00 +0200
+
+DR::TimeParse.parse("-3 years 2 minutes") #-94672920
+=> 2011-08-22 20:01:34 +0200
+
+require 'active_support/time'
+DR::TimeParse.parse("+3.years+2.days")
+=> 2017-08-24 14:04:08 +0200
+=end
