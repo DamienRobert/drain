@@ -10,22 +10,21 @@ module DR
 				require "yaml"
 				return pretty_print(string.to_yaml, pretty: pretty)
 			end
-			pretty = "color" if pretty == nil #default
-			pretty = "pp" if pretty == true
+			pretty = "color" if pretty == nil or pretty == true #default
 			case pretty.to_s
 			when "ap"
 				begin
 					require 'ap'
 					ap string
 				rescue LoadError,NameError
-					pretty_print(string,pretty:true)
+					pretty_print(string,pretty: :pp)
 				end
 			when "color", "pp_color"
 				begin
 					require 'pry'
 					Pry::ColorPrinter.pp string
 				rescue LoadError,NameError
-					pretty_print(string,pretty:true)
+					pretty_print(string,pretty: :pp)
 				end
 			when "pp"
 				require 'pp'
