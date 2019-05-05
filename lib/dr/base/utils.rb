@@ -1,7 +1,7 @@
 module DR
 	module Utils
 		extend self
-		def pretty_print(string, format: nil, pretty: false)
+		def pretty_print(string, format: nil, pretty: nil)
 			case format.to_s
 			when "json"
 				require 'json'
@@ -10,14 +10,24 @@ module DR
 				require "yaml"
 				return pretty_print(string.to_yaml, pretty: pretty)
 			end
-			if pretty.to_s=="color"
+			pretty = "color" if pretty == nil #default
+			pretty = "pp" if pretty == true
+			case pretty.to_s
+			when "ap"
 				begin
 					require 'ap'
 					ap string
 				rescue LoadError,NameError
 					pretty_print(string,pretty:true)
 				end
-			elsif pretty
+			when "color", "pp_color"
+				begin
+					require 'pry'
+					Pry::ColorPrinter.pp string
+				rescue LoadError,NameError
+					pretty_print(string,pretty:true)
+				end
+			when "pp"
 				require 'pp'
 				pp string
 			else
@@ -47,6 +57,24 @@ module DR
 				b=components[(components.length-num+1)..(components.length-1)]
 				return [a.join(sep), *b]
 			end
+		end
+	end
+
+	# Include this to get less output from pp
+	module PPHelper
+		# less verbose for pretty_print
+		def pretty_print(pp)
+			info = respond_to?(:to_pp) ? to_pp : to_s
+			pp.object_address_group(self) { pp.text " "+info }
+		end
+
+		#since we hide the pp value of self, allow to inspect it
+		def export
+			r={}
+			instance_variables.sort.each do |var|
+				r[var]=instance_variable_get(var)
+			end
+			r
 		end
 	end
 end
