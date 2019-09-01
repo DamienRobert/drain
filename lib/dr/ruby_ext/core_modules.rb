@@ -36,7 +36,7 @@ module DR
 
 			# Same as +deep_merge+, but modifies +self+.
 			def deep_merge!(other_hash, append: :auto, &block)
-				return unless other_hash
+				return self unless other_hash
 				other_hash.each_pair do |k,v|
 					tv = self[k]
 					case
