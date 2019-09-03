@@ -1,6 +1,7 @@
 module DR
 	module Delegator
 		def self.delegate_h(klass, var)
+			require 'forwardable'
 			# put in a Module so that they are easier to distinguish from the
 			# 'real' functions
 			m=Module.new do
