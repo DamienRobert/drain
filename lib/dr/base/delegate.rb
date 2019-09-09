@@ -1,6 +1,7 @@
 module DR
 	module Delegator
-		def self.delegate_h(klass, var)
+		extend self
+		def delegate_h(klass, var)
 			require 'forwardable'
 			# put in a Module so that they are easier to distinguish from the
 			# 'real' functions
@@ -11,6 +12,17 @@ module DR
 				def_delegators var, *methods
 			end
 			klass.include(m)
+		end
+
+		def access_methods(klass, var, *methods)
+			methods.each do |k|
+				klass.define_method k do
+					instance_variable_get(var)[k]
+				end
+				klass.defined_method :"#{k}=" do |*args|
+					instance_variable_get(var).send(:[]=, k, *args)
+				end
+			end
 		end
 	end
 end
