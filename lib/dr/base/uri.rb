@@ -55,7 +55,7 @@ module URI
 		class Generic < ::URI::Generic
 			# check_host returns `false` for 'foo_bar'
 			# but in ssh config this can be a valid host
-			def check_host(v)
+			def check_host(_v)
 				return true
 			end
 			# @example
@@ -171,11 +171,13 @@ module DR
 				components.each do |m|
 					uri.define_singleton_method(m) do
 						r = super()
-						r && r.is_a?(String) ? URI.unescape(r) : r
+						# r && r.is_a?(String) ? URI.unescape(r) : r
+						r && r.is_a?(String) ? URI.decode_www_form_component(r) : r
 					end
 					uri.define_singleton_method(:"#{m}=") do |v|
 						begin
-							super(v && v.is_a?(String) ? URI.escape(v) : v)
+							#super(v && v.is_a?(String) ? URI.escape(v) : v)
+							super(v && v.is_a?(String) ? URI.encode_www_form_component(v) : v)
 						rescue URI::InvalidURIError => e
 							warn "#{e} in (#{self}).#{m}=#{v}"
 							 # require 'pry'; binding.pry
