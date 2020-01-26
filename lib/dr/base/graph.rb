@@ -226,7 +226,7 @@ module DR
 
 		# allow a hash too
 		def |(graph)
-			graph=Graph.new(graph) unless Graph===graph
+			graph=Graph.new(graph, **{}) unless Graph===graph
 			build(*graph.all, recursive: false)
 		end
 		def +(graph)
