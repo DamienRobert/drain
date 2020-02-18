@@ -86,7 +86,7 @@ module DR
 	# reimplement deprecated escape and unescape methods since
 	# URI.encode_www_form_component does not encode the same way
 	# cf the source code of URI::DEFAULT_PARSER.escape
-	module URI
+	module URIEscape
 		extend self
 		def escape(*arg)
 			URI::DEFAULT_PARSER.escape(*arg)
@@ -184,12 +184,12 @@ module DR
 				components.each do |m|
 					uri.define_singleton_method(m) do
 						r = super()
-						r && r.is_a?(String) ? URI.unescape(r) : r
+						r && r.is_a?(String) ? URIEscape.unescape(r) : r
 						# r && r.is_a?(String) ? ::URI.decode_www_form_component(r) : r
 					end
 					uri.define_singleton_method(:"#{m}=") do |v|
 						begin
-							super(v && v.is_a?(String) ? URI.escape(v) : v)
+							super(v && v.is_a?(String) ? URIEscape.escape(v) : v)
 							# super(v && v.is_a?(String) ? ::URI.encode_www_form_component(v) : v)
 						rescue URI::InvalidURIError => e
 							warn "#{e} in (#{self}).#{m}=#{v}"
