@@ -12,3 +12,5 @@ development_dependencies:
   rake: "~> 10"
   rubygems-tasks: "~> 0.2"
   yard: "~> 0.8"
+  chronic: "~> 0.10"
+  chronic_duration: "~> 0.10"
