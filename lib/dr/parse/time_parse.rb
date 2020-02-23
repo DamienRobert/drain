@@ -15,7 +15,7 @@ module DR
 				first=m[1]
 				second=m[2]
 				opt[:norange]=true
-				return Chronic::Span.new(self.parse(first, opt),self.parse(second,opt))
+				return Chronic::Span.new(self.parse(first, **opt),self.parse(second, **opt))
 			end
 
 			if s.match(/\A[[:space:]]*\z/) # blank
