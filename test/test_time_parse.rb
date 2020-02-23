@@ -20,20 +20,20 @@ describe DR::TimeParse do
 	end
 
 	it "Can parse a range" do
-		DR::TimeParse.parse("+100..tomorrow").must_equal(
+		_(DR::TimeParse.parse("+100..tomorrow")).must_equal(
 			Time.parse("2000-01-01 00:01:40")..Time.parse("2000-01-02 12:00:00")
 		)
-		DR::TimeParse.parse("now..in seven days").must_equal(
+		_(DR::TimeParse.parse("now..in seven days")).must_equal(
 			Time.parse("2000-01-01 00:00:00")..Time.parse("2000-01-08 00:00:00")
 		)
 	end
 
 	it "Can parse a date" do
-		DR::TimeParse.parse("today").must_equal(Time.parse("2000-01-01-12:00:00"))
+		_(DR::TimeParse.parse("today")).must_equal(Time.parse("2000-01-01-12:00:00"))
 	end
 
 	it "Can put a date in a range" do
-		DR::TimeParse.parse("today", range: true).must_equal(
+		_(DR::TimeParse.parse("today", range: true)).must_equal(
 			Time.parse("2000-01-01-00:00:00")..Time.parse("2000-01-02-00:00:00")
 		)
 	end

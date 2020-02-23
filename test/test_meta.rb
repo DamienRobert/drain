@@ -49,17 +49,17 @@ describe DR::Meta do
 	# end
 
 	it "Can show all ancestors" do
-		DR::Meta.all_ancestors("foo").include?(String.singleton_class).must_equal(true)
+		_(DR::Meta.all_ancestors("foo").include?(String.singleton_class)).must_equal(true)
 	end
 
 	it "Can generate bound methods" do
 		m=DR::Meta.get_bound_method("foo", :bar) do |x|
 			self+x
 		end
-		m.call("bar").must_equal("foobar")
+		_(m.call("bar")).must_equal("foobar")
 	end
 
 	it "Can apply unbound methods" do
-		DR::Meta.apply(method: String.instance_method(:length), to: "foo").must_equal(3)
+		_(DR::Meta.apply(method: String.instance_method(:length), to: "foo")).must_equal(3)
 	end
 end

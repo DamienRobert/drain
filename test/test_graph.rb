@@ -8,53 +8,53 @@ describe DR::Graph do
 	end
 
 	it "builds the graph" do
-		@graph.nodes.length.must_equal 3
+		_(@graph.nodes.length).must_equal 3
 	end
 
 	it "accepts :to_a" do
-		@graph.to_a.map(&:name).must_equal(["foo", "bar", "baz"])
+		_(@graph.to_a.map(&:name)).must_equal(["foo", "bar", "baz"])
 	end
 
 	it "accepts :to_hash" do
-		@graph.to_hash.first[1].keys.must_equal [:children, :parents, :attributes]
+		_(@graph.to_hash.first[1].keys).must_equal [:children, :parents, :attributes]
 	end
 	
 	it "can be converted to a hash" do
-		@graph.to_h.must_equal ({"foo"=> ["bar","baz"], "bar" => ["baz"], "baz" => []})
+		_(@graph.to_h).must_equal ({"foo"=> ["bar","baz"], "bar" => ["baz"], "baz" => []})
 	end
 
 	it "can give a node" do
-		@graph["foo"].class.must_equal DR::Node
+		_(@graph["foo"].class).must_equal DR::Node
 	end
 
 	it "can give descendants of a node" do
-		@graph["foo"].descendants.map(&:to_s).must_equal(["bar", "baz"])
+		_(@graph["foo"].descendants.map(&:to_s)).must_equal(["bar", "baz"])
 	end
 
 	it "can give ancestors of a node" do
-		@graph["baz"].ancestors.map(&:to_s).must_equal(["foo", "bar"])
+		_(@graph["baz"].ancestors.map(&:to_s)).must_equal(["foo", "bar"])
 	end
 
 	it "can give the root nodes" do
-		@graph.roots.map(&:name).must_equal(["foo"])
+		_(@graph.roots.map(&:name)).must_equal(["foo"])
 	end
 
 	it "can give the bottom nodes" do
-		@graph.bottom.map(&:name).must_equal(["baz"])
+		_(@graph.bottom.map(&:name)).must_equal(["baz"])
 	end
 
 	it "can show all ancestors of nodes" do
-		@graph.ancestors("baz","bar").map(&:to_s).must_equal(["baz", "bar", "foo"])
-		@graph.ancestors("baz","bar", ourselves: false).map(&:to_s).must_equal(["foo"])
+		_(@graph.ancestors("baz","bar").map(&:to_s)).must_equal(["baz", "bar", "foo"])
+		_(@graph.ancestors("baz","bar", ourselves: false).map(&:to_s)).must_equal(["foo"])
 	end
 
 	it "can show all descendants of nodes" do
-		@graph.descendants("foo","bar").map(&:to_s).must_equal(["foo", "bar", "baz"])
-		@graph.descendants("foo","bar", ourselves: false).map(&:to_s).must_equal(["baz"])
+		_(@graph.descendants("foo","bar").map(&:to_s)).must_equal(["foo", "bar", "baz"])
+		_(@graph.descendants("foo","bar", ourselves: false).map(&:to_s)).must_equal(["baz"])
 	end
 
 	it "can give a hash of children" do
-		@graph.to_children.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
+		_(@graph.to_children).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
 	end
 
 	describe "build" do
@@ -64,11 +64,11 @@ describe DR::Graph do
 	end
 
 	it "detects unneeded nodes" do
-		@graph.unneeded("foo","bar").map(&:name).must_equal ["foo","bar"]
-		@graph.unneeded("bar").map(&:name).must_equal []
+		_(@graph.unneeded("foo","bar").map(&:name)).must_equal ["foo","bar"]
+		_(@graph.unneeded("bar").map(&:name)).must_equal []
 	end
 	it "detects unneeded descendants" do
-		@graph.unneeded_descendants("foo").map(&:name).must_equal ["foo", "bar", "baz"]
+		_(@graph.unneeded_descendants("foo").map(&:name)).must_equal ["foo", "bar", "baz"]
 	end
 
 	describe "It works with a cycle" do
@@ -77,7 +77,7 @@ describe DR::Graph do
 		end
 
 		it "It builds the graph" do
-			@graph.nodes.length.must_equal 3
+			_(@graph.nodes.length).must_equal 3
 		end
 	end
 
@@ -97,9 +97,9 @@ describe DR::Graph do
 		end
 
 		it "It builds the graph" do
-			@graph.nodes.length.must_equal 3
-			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["foo"]})
-			@graph['baz'].attributes.must_equal(real: true)
+			_(@graph.nodes.length).must_equal 3
+			_(@graph.to_h).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["foo"]})
+			_(@graph['baz'].attributes).must_equal(real: true)
 		end
 	end
 
@@ -109,18 +109,18 @@ describe DR::Graph do
 		end
 
 		it "Graph2 is well defined" do
-			@graph2.nodes.map(&:name).must_equal(%w(foo bar baz qux))
+			_(@graph2.nodes.map(&:name)).must_equal(%w(foo bar baz qux))
 		end
 
 		it "Can be merged in place" do
 			@graph | @graph2
-			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
+			_(@graph.to_h).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
 		end
 
 		it "Can be merged" do
 			@graph3 = @graph + @graph2
-			@graph.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
-			@graph3.to_h.must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
+			_(@graph.to_h).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>[]})
+			_(@graph3.to_h).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
 		end
 	end
 end
