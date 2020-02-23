@@ -225,13 +225,16 @@ module DR
 		end
 
 		# allow a hash too
-		def |(graph)
+		def merge!(graph)
 			graph=Graph.new(graph, **{}) unless Graph===graph
 			build(*graph.all, recursive: false)
 		end
-		def +(graph)
+		def merge(graph)
 			clone.|(graph)
 		end
+
+		alias | merge!
+		alias + merge
 
 		def dump(mode: :graph, nodes_list: :roots, show_attr: true, out: [], **_opts)
 			n=case nodes_list
@@ -377,7 +380,7 @@ module DR
 				while !new_nodes.empty?
 					g2=yield(*new_nodes)
 					g2=Graph.new(g2) unless g2.is_a?(Graph)
-					g|g2
+					g.merge!(g2)
 					nodes=nodes.concat(new_nodes)
 					new_nodesg.nodes.map(&:name)-nodes
 				end

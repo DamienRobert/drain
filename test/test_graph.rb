@@ -113,7 +113,7 @@ describe DR::Graph do
 		end
 
 		it "Can be merged in place" do
-			@graph | @graph2
+			@graph.merge!(@graph2) #alias @graph | @graph2
 			_(@graph.to_h).must_equal({"foo"=>["bar", "baz"], "bar"=>["baz"], "baz"=>["bar", "qux"], "qux"=>[]})
 		end
 

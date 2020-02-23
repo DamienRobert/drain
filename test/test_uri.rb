@@ -3,7 +3,7 @@ require 'dr/base/uri'
 
 describe DR::URIWrapper do
 	before do
-		@uri=DR::URIWrapper.new(URI.escape("http://ploum:secret@plam:443/foo bar"))
+		@uri=DR::URIWrapper.new(DR::URIEscape.escape("http://ploum:secret@plam:443/foo bar"))
 	end
 	it "Wraps an uri element" do
 		_(@uri.scheme).must_equal "http"
