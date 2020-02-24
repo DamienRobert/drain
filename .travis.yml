@@ -1,9 +1,13 @@
 ---
 language: ruby
 rvm:
-  - 2.5.1
-  - 2.4.4
-  - 2.3.7
+  - 2.7.0
+  - 2.6.5
+  - 2.5.7
+  - 2.4.9
+  - 2.3.8 #eol, but still used in debian
+  #- 2.2.10
+  #- 2.1.10
   #- ruby-head
   #- ruby-head-clang
 script: rake test
