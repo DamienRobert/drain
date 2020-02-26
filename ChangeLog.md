@@ -1,3 +1,13 @@
+== Release v0.6.0 (2020-02-26) ==
+
+	* Add github actions for tests
+	* Add github action for tests
+	* Bump travis versions
+	* Fix ruby 2.7 warning
+	* graph.rb: add merge! and merge
+	* test: fix minitest warnings
+	* gemspec: add chronic and chronic_duration
+
 == Release v0.5.1 (2020-02-18) ==
 
 	* DR::URI -> DR::URIEscape
