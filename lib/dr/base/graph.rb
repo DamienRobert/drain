@@ -213,6 +213,11 @@ module DR
 			end
 			self
 		end
+		
+		# alias << build
+		def <<(node, **opts)
+		  build(node, **opts)
+		end
 
 		def all
 			@nodes.sort
