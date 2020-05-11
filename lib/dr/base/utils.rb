@@ -1,28 +1,32 @@
 module DR
 	module Utils
 		extend self
-		def pretty_print(string, format: nil, pretty: nil)
+		def pretty_print(string, format: nil, pretty: nil, **kw)
 			case format.to_s
 			when "json"
 				require 'json'
-				return pretty_print(string.to_json, pretty: pretty)
+				return pretty_print(string.to_json, pretty: pretty, **kw)
 			when "yaml"
 				require "yaml"
-				return pretty_print(string.to_yaml, pretty: pretty)
+				return pretty_print(string.to_yaml, pretty: pretty, **kw)
 			end
 			pretty = "color" if pretty == nil or pretty == true #default
 			case pretty.to_s
-			when "ap"
+			when "ap", "awesome_print", "amazing_print"
 				begin
-					require 'ap'
-					ap string
+					require 'amazing_print'
+					ap(string, **kw)
 				rescue LoadError,NameError
-					pretty_print(string,pretty: :pp)
+					pretty_print(string,pretty: :pp_color, **kw)
 				end
 			when "color", "pp_color"
 				begin
 					require 'pry'
-					Pry::ColorPrinter.pp string
+			    if kw[:multiline] == false #simulate no multiline
+					  Pry::ColorPrinter.pp string, $DEFAULT_OUTPUT, 9999
+			    else
+					  Pry::ColorPrinter.pp string
+					end
 				rescue LoadError,NameError
 					pretty_print(string,pretty: :pp)
 				end
