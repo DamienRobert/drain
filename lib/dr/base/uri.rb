@@ -222,6 +222,7 @@ module DR
         ::URI::DEFAULT_PARSER.unescape(*arg)
       end
     end
+    Escape=URIEscape
     extend URIEscape
 
     def self.parse(s)
