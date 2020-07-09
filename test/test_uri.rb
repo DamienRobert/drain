@@ -1,9 +1,9 @@
 require 'helper'
 require 'dr/base/uri'
 
-describe DR::URIWrapper do
+describe DR::URI::Wrapper do
 	before do
-		@uri=DR::URIWrapper.new(DR::URIEscape.escape("http://ploum:secret@plam:443/foo bar"))
+		@uri=DR::URI::Wrapper.new(DR::URI::Escape.escape("http://ploum:secret@plam:443/foo bar"))
 	end
 	it "Wraps an uri element" do
 		_(@uri.scheme).must_equal "http"
@@ -29,7 +29,7 @@ describe DR::URIWrapper do
 		_(@uri.soft_merge("foo://plim@").to_s).must_equal("foo://plim:secret@plam:443/foo%20bar")
 	end
 	it "Can be reverse merged" do
-		_(DR::URIWrapper.parse("//user@server").reverse_merge(@uri).to_s).must_equal("http://user:secret@server:443/foo%20bar")
+		_(DR::URI::Wrapper.parse("//user@server").reverse_merge(@uri).to_s).must_equal("http://user:secret@server:443/foo%20bar")
 	end
 end
 
