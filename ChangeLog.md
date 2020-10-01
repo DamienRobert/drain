@@ -1,3 +1,11 @@
+== Release v0.7.0 (2020-07-09) ==
+
+	* Update test for new uri.rb API
+	* uri.rb: Add alias
+	* DR::URI
+	* utils.rb: switch to amazing_print
+	* graph.rb: <<
+
 == Release v0.6.0 (2020-02-26) ==
 
 	* Add github actions for tests
